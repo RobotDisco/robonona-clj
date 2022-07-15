@@ -1,0 +1,42 @@
+* Robonona
+
+Robonona is a collection of mattermost integrations which I use at my mattermost-based workplace for cultural reasons
+
+** Installation
+
+1. Install [[https://babashka.org/][Babashka]], a Clojure environment optimized for the CLI, via the package manager of your choice.
+
+** Configuration
+
+The following environment variables are required:
+
+- ROBONONA_MATTERMOST_URL :: The hostname of your mattermost instance
+- ROBONONA_MATTERMOST_USER :: The user that this script will operate as
+- ROBONONA_MATTERMOST_PASSWORD :: The password for said user
+- ROBONONA_MATTERMOST_CHANNEL :: The channel this script will use
+- ROBONONA_BIRTHDAY_ICAL_URL :: The URL for the BambooHR birthday iCalendar
+- ROBONONA_ANNIVERSARY_ICAL_URL :: The URL for the BambooHR anniversary iCalendar
+
+The following environment variables are optional:
+
+- ROBONONA_DRY_RUN :: Set to 1 to omit sending actual messages to mattermost. Pulling information from Mattermost will still happen.
+
+** Usage
+
+*** Print a list of everyone's birthdays and anniversaries
+#+BEGIN_SRC bash
+bb ./celebrate.clj
+#+END_SRC
+
+*** Match people in a particular channel to encourage socialization
+#+BEGIN_SRC bash
+bb ./coffee.clj
+#+END_SRC
+
+## Contributing
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
+Please make sure to update tests as appropriate.
+
+## License
+[[https://choosealicense.com/licenses/epl-1.0/][Eclipse Public License 1.0]]
