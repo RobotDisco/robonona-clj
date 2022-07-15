@@ -1,5 +1,13 @@
+# Ignore everything in this dir but make sure it exists
+.direnv/*
+!.direnv/.gitkeep
+
+# Ignore nix derivations
+result*
+
+# Ignore clojure dirs
 .clj-kondo/
 .cpcache/
+
+# Ignore LSP data
 .lsp/
-.direnv/
-result*
