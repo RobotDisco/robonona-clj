@@ -1,41 +1,46 @@
 {
-  description = "A clj-nix flake";
+  description = "A Mattermost/BambooHR bot for culture";
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
+    devshell = {
+      url = "github:numtide/devshell";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     clj-nix = {
       url = "github:jlesquembre/clj-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+    
   };
-  outputs = { self, nixpkgs, flake-utils, clj-nix }:
+  outputs = { self, nixpkgs, flake-utils, devshell, clj-nix }:
 
     flake-utils.lib.eachDefaultSystem (system:
       let
-        pkgs = nixpkgs.legacyPackages.${system};
-        cljpkgs = clj-nix.packages."${system}";
+        pkgs = import nixpkgs {
+          inherit system;
+          overlays = [
+            clj-nix.overlays.default
+            devshell.overlay
+          ];
+        };
       in
 
       {
-        packages = {
-
-          hello-clj = cljpkgs.mkCljBin {
-            projectSrc = ./.;
-            name = "me.lafuente/cljdemo";
-            main-ns = "hello.core";
-            jdkRunner = pkgs.jdk17_headless;
-          };
-
-          hello-jdk = cljpkgs.customJdk {
-            cljDrv = self.packages."${system}".hello-clj;
-            locales = "en,es";
-          };
-
-          hello-graal = cljpkgs.mkGraalBin {
-            cljDrv = self.packages."${system}".hello-clj;
-          };
-
+        devShells.default = pkgs.devshell.mkShell {
+          packages = [
+            pkgs.clojure
+          ];
+          commands = [
+            {
+              name = "update-deps";
+              help = "Update deps-lock.json";
+              command = ''
+                nix run github:jlesquembre/clj-nix#deps-lock
+              '';
+            }
+          ];
         };
       });
 
