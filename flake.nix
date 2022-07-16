@@ -31,6 +31,8 @@
         devShells.default = pkgs.devshell.mkShell {
           packages = [
             pkgs.clojure
+            pkgs.clojure-lsp
+            pkgs.clj-kondo
           ];
           commands = [
             {

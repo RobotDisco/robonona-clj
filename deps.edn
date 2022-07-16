@@ -1,2 +1,5 @@
-{:deps {org.clojure/clojure {:mvn/version "1.11.1"}}
- :paths ["src"]}
+{:deps {org.clojure/clojure {:mvn/version "1.11.1"}
+        mattermost-clj {:mvn/version "4.0.3"}}
+ :paths ["src"]
+ :aliases
+ {:env/test {:extra-paths ["test"]}}
