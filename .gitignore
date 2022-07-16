@@ -11,3 +11,6 @@ result*
 
 # Ignore LSP data
 .lsp/
+
+# Ignore cider/nrepl files
+.nrepl-*
