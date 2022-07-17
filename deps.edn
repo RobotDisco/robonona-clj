@@ -1,5 +1,7 @@
 {:deps {org.clojure/clojure {:mvn/version "1.11.1"}
-        mattermost-clj/mattermost-clj {:mvn/version "4.0.3"}}
+        ;; Deps for my forked mattermost-clj
+        clj-http/clj-http {:mvn/version "3.6.0"}
+        cheshire/cheshire {:mvn/version "5.5.0"}}
  :paths ["src"]
  :aliases
  {:env/test {:extra-deps {;; Test Runner

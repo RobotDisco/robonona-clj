@@ -40,3 +40,5 @@ Please make sure to update tests as appropriate.
 
 ## License
 [[https://choosealicense.com/licenses/epl-1.0/][Eclipse Public License 1.0]]
+
+Note: all files under =src/mattermost_clj= were forked from https://github.com/devth/mattermost-clj which is also under the EPLv1.0 license.
