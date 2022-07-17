@@ -4,7 +4,9 @@
         cheshire/cheshire {:mvn/version "5.5.0"}}
  :paths ["src"]
  :aliases
- {:env/test {:extra-deps {;; Test Runner
+ {:env/test {:extra-deps {;; Property-based test generators
+                          org.clojure/test.check {:mvn/version "1.1.1"}
+                          ;; Test Runner
                           io.github.cognitect-labs/test-runner
                           {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
              :exec-fn cognitect.test-runner.api/test

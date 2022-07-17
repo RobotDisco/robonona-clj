@@ -875,16 +875,6 @@
       "hash": "sha256-gBYcy1jRHgdBHb2oADXQ/ggskKqKfgEjrYhEdltxTMM="
     },
     {
-      "mvn-path": "mattermost-clj/mattermost-clj/4.0.3/mattermost-clj-4.0.3.jar",
-      "mvn-repo": "https://repo.clojars.org/",
-      "hash": "sha256-5yj135ShOW/9pQlHDGAI3UwwAbb3ODjRb/S0uo0ll78="
-    },
-    {
-      "mvn-path": "mattermost-clj/mattermost-clj/4.0.3/mattermost-clj-4.0.3.pom",
-      "mvn-repo": "https://repo.clojars.org/",
-      "hash": "sha256-EEIRWGy148x6aorINn47jTOEGw/8w6ONEs7U1ZeECe8="
-    },
-    {
       "mvn-path": "me/raynes/fs/1.4.6/fs-1.4.6.jar",
       "mvn-repo": "https://repo.clojars.org/",
       "hash": "sha256-APCZw6sL9dqOug6TBfo7NeXj/DWVMwtz7hTgP9Lshq8="
@@ -2013,6 +2003,16 @@
       "mvn-path": "org/clojure/test.check/0.10.0-alpha3/test.check-0.10.0-alpha3.pom",
       "mvn-repo": "https://repo1.maven.org/maven2/",
       "hash": "sha256-0tKSO0B6nNnReAMfH0JIFaCcftoGQlrByyOafcf8Jmo="
+    },
+    {
+      "mvn-path": "org/clojure/test.check/1.1.1/test.check-1.1.1.jar",
+      "mvn-repo": "https://repo1.maven.org/maven2/",
+      "hash": "sha256-lFEYFjssNVpfq5bJ69AShxUlVbsulkH1zZ7Qf+S8UHg="
+    },
+    {
+      "mvn-path": "org/clojure/test.check/1.1.1/test.check-1.1.1.pom",
+      "mvn-repo": "https://repo1.maven.org/maven2/",
+      "hash": "sha256-lqAC7Edw1pxWlVEJykIewELOc0+jdnf6rgvi8708xxc="
     },
     {
       "mvn-path": "org/clojure/tools.analyzer.jvm/1.1.0/tools.analyzer.jvm-1.1.0.jar",
