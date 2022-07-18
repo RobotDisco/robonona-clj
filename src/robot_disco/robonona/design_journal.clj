@@ -1,4 +1,4 @@
-(ns net.robot-disco.robonona.coffeebot.design-journal
+(ns robot-disco.robonona.design-journal
   (:require
    ;; Tests and specifications
    [clojure.test :refer [deftest is testing]]
