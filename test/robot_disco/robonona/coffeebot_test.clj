@@ -43,15 +43,16 @@
                  (spec-test/summarize-results)
                  :check-passed)))))
 
-(deftest mattermost-user->robonona-user
-  (let [result (SUT/mattermost-user->robonona-user mock-mattermost-user)]
+(deftest mattermost-user->user
+  (let [result (SUT/mattermost-user->user mock-mattermost-user)]
     (is (= result
            #::SUT
            {:user-id "34ib5j6khbfjebfjgb356hjdhg"
             :username "gaelan.dcosta"}))
-    (is (= 1 (-> (spec-test/check `SUT/mattermost-user->robonona-user)
-                 (spec-test/summarize-results)
-                 :check-passed)))))
+    (testing "generative tests"
+      (is (= 1 (-> (spec-test/check `SUT/mattermost-user->user)
+                   (spec-test/summarize-results)
+                   :check-passed))))))
 
 (comment
 

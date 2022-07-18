@@ -59,14 +59,14 @@
               (contains? (:ret %) ::unmatched-user))))
 
 
-(defn mattermost-user->robonona-user
+(defn mattermost-user->user
   "Convert mattermost's user structure info coffeebot's user structure."
   [mm-user]
   (clojure.set/rename-keys mm-user
                            {:id ::user-id
                             :username ::username}))
 
-(spec/fdef mattermost-user->robonona-user
+(spec/fdef mattermost-user->user
   :args (spec/cat :mm-user ::mattermost-user)
   :ret ::user)
 
