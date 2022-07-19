@@ -9,7 +9,9 @@
    ;; Mattermost API client
    [mattermost-clj.core :as mattermost]
    [mattermost-clj.api.channels :as channels]
-   [mattermost-clj.api.users :as users]))
+   [mattermost-clj.api.users :as users]
+   ;; Application logic
+   [robot-disco.robonona.coffeebot :as coffee]))
 
 ;;; I don't want these exploratory expressions running every single time I load
 ;;; the file; they might do side-effectful things with the systems I am
@@ -113,7 +115,7 @@
   (clojure.test/run-test pair-users)
 
 
-  
+
   ) ;; Comment ends here
 
 (comment 
@@ -161,7 +163,7 @@
   ;; `spec-test/instrument` can do this.
   (spec-test/instrument [match-users])
 
-  
+
 
   ) ;; Comment ends here
 
@@ -169,6 +171,18 @@
 ;;; 2022-07-17 Practialli's development flow w/ TDD + spec
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ;; Found at https://www.youtube.com/watch?v=mXNZxy71zT4&list=PLpr9V-R8ZxiDjyU7cQYWOEFBDR1t7t0wv&index=78
+
+  ;; 1. Write a failing test
+  ;; 2. Write mock data for that test
+  ;; 3. Write a function definition that returns the argument as passed in
+  ;; 4. Tests will obviously fail
+  ;; 5. Write spec for function's argument  
+  ;; 6. Write spec for return value
+  ;; 7. Replace mock data with generated values from specification.
+  ;; 8. Update functions and make tests pass
+  ;; 9. Generate function specification based on unit test contracts
+  ;; 10. Run specification checks  
+
 ;;; This is a really cool idea. Let's try it with what I have!
 
 ;;; 1. Write a failing test
@@ -300,7 +314,7 @@
                      (not (contains? (:ret  %) ::unmatched-user))
                      (contains? (:ret %) ::unmatched-user))))
 
-  ;; 9. Run specification checks
+  ;; 10. Run specification checks
 
   (spec-test/instrument `match-users)
 
@@ -337,6 +351,7 @@
 
 ;; It will note that at least with dated ordered transcripts it is easier to
 ;; find out what is relevant and how this whole thing evolved.
+
 
 
   ) ;; Comment ends here
@@ -376,9 +391,11 @@
 
   ;; Means code can't work with Clojure < 1.9, I am ok with that here.
 
-  ;; According to stack overflow there are differences between specs for testing and specs for data / conforming? Don't yet understand the subtlety.
+  ;; According to stack overflow there are differences between specs for testing
+  ;; and specs for data / conforming? Don't yet understand the subtlety.
 
-  ;; Recommendations for public-facing data is that they contain "organization" and "project" namespace segments.
+  ;; Recommendations for public-facing data is that they contain "organization"
+  ;; and "project" namespace segments.
   ;; Recommendations for private projects, like this one, is something smaller
   ;; like `:coffeebot/users`. A nice thing is to leverage `::` tho since then I
   ;; can just move them over without renaming.
@@ -388,6 +405,146 @@
   ;; Generative tests might have to become their own pass if they block
   ;; fast feedback.
 
+  ;; Apparently in spec I can't do `(spec/def ::user/id ...)` that is not a
+  ;; valid keyword?
+
 
 
   ) ;; Comment ends here
+
+(comment
+;;; 2022-07-18 Convert list of mattermost users into matched pairs
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  #_ (spec-test/instrument `coffee/match-users)
+  #_ (spec-test/unstrument `coffee/match-users)
+  
+  (def matches (coffee/match-users
+                (spec-gen/generate
+                 (spec/gen
+                  (spec/coll-of ::coffee/mattermost-user)))))
+
+  (spec/valid? ::coffee/matches matches)
+  ;; => false
+  (spec/explain ::coffee/matches matches)
+
+
+  ;; Hmm. When I instrument my match-users function I notice that the resulting
+  ;; value does not conform because the keys are from `::mattermost-user`
+  ;; Does this mean `::user` is unnecessary? Maybe. Let's defer until I do
+  ;; enough to be annoyed by it.
+  ;; TODO decide if a distinction between mattermost and coffeebot data for
+  ;; users is worth it.
+
+
+
+  ) ;; Comment ends here
+
+(comment
+;;; 2022-07-18 Fetch list of mattermost users from mattermost
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; How do I do this via components and event dispatch data?
+
+  ;; My list of active users, returned in a paged way.
+  ;; Note that I had to fork the mattermost api code to enable the `:active` param.
+
+
+  (def token (System/getenv "ROBONONA_MATTERMOST_TOKEN"))
+  (def host "mattermost.internal.tulip.io")
+
+  ;; Impure function to set connection params
+  (defn init
+    [host token]
+      (mattermost/set-api-context
+   {:debug false
+    :base-url (str "https://" host "/api/v4")
+    :auths {"api_key" (str "Bearer " token)}}))
+
+  (init host token)
+
+  (def team "General")
+  (def channel "coffeebot-everywhere")
+
+  (defn channel-id-by-team-name-and-channel-name
+    [team channel]
+    (->> channel
+         (channels/teams-name-team-name-channels-name-channel-name-get team)
+         :id))
+
+  (def channel-id (channel-id-by-team-name-and-channel-name team channel))
+
+  ;; This returns only a single page of data
+  (defn active-users-by-channel-id-one-page
+    [channel-id]  
+    (users/users-get {:page 0
+                      :active true
+                      :in-channel channel-id}))
+ 
+  (first (active-users-by-channel-id-one-page channel-id))
+  ;; => ({:email "fake.user@tulip.com",
+  ;;      :first_name "Fake",
+  ;;      :timezone
+  ;;      {:automaticTimezone "", :manualTimezone "", :useAutomaticTimezone "true"},
+  ;;      :disable_welcome_email false,
+  ;;      :locale "en",
+  ;;      :last_picture_update 1628099675347,
+  ;;      :update_at 1656426655948,
+  ;;      :roles "system_user",
+  ;;      :nickname "Fake",
+  ;;      :auth_service "",
+  ;;      :username "fake.user",
+  ;;      :auth_data "",
+  ;;      :id "3881xw1gk78t9fsrxkadcuex7c",
+  ;;      :delete_at 0,
+  ;;      :last_name "User",
+  ;;      :position "Senior Software Developer",
+  ;;      :create_at 1558451555923,
+  ;;      :props
+  ;;      {:customStatus
+  ;;       "{\"emoji\":\"banana_dance\",\"text\":\"Peanut Butter \\u0026 Jelly Time\",\"duration\":\"today\",\"expires_at\":\"2022-06-29T03:59:59.999Z\"}"}})
+
+  ;; This requests all the pages until pages are empty and returns the full list
+
+  (first (active-users-by-channel-id-one-page channel-id))
+
+  (defn active-users-by-channel-id
+    [channel-id]
+    (loop [results []
+           page 0]
+      (let [body (users/users-get {:page page :active true :in-channel channel-id})
+            processed (map coffee/mattermost-user->user body)
+            accumulated-results (into results processed)
+            ;; Stop after 16 pages (~ 1000 users)
+            ;; or if the next page had zero entries
+            continue? (and (< page 16)
+                           (< 0 (count processed)))]
+        (if continue?
+          (do
+            (Thread/sleep 1000)
+            (recur accumulated-results
+                   (inc page)))
+          accumulated-results))))
+
+  (count (active-users-by-channel-id channel-id))
+  (first (active-users-by-channel-id channel-id))
+
+  ;; Note: We added a max page limit because if for some reason we are in a
+  ;; channel with millions of users I don't want to take down the mattermost
+  ;; host.
+  ;; TODO How do I notify the user properly when the response has too many users
+  ;; and we give up?
+  ;; Note we also pause for a second between iterations as to not slam the
+  ;; server.
+  ;; TODO Make the pause between calls clearer
+  ;; TODO Is it worth making these calls async? Probably not. Useful in other
+  ;; contexts however.
+
+  ;; Hmm even with my translator method `mattermost-user->user` all it does is
+  ;; rename specific keys. It doesnt filter anything out. You know what, let's
+  ;; just roll with it.
+
+  ;; TODO How would I TDD this? How would I spec this? Can I leverage `spec`?
+
+
+
+  ) ;; Commend ends here
