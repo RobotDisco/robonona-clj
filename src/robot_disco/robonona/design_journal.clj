@@ -557,11 +557,11 @@
 
 
   
-  ) ;; Commend ends here
+  ) ;; Comment ends here
 
 (comment
 ;;; 2022-07-18 Next steps (not my current issue)
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;; Practicalli seems to design web services around `integrant` (for components)
   ;; and `aero` (for config). I know I like aero. Integrant seemed like the one
@@ -573,4 +573,48 @@
   ;; I know I'm going to have to move towards a component model anyway
   ;; for testing and separating out pure from impure functions, so.
 
+  ) ;; Comment ends here
+
+(comment
+;;; 2022-07-19 Mattermost API as a component
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; First we isolate the http call, pagination handling for generic data
+  ;; Since we're using a mattermost library we have to be able to handle
+  ;; any get call, at least. (Any HTTP request type, even better.)
+  (def request-page-limit
+    "Maximum number of pages to request before returning the call as is."
+    16)
+
+  (defn request-paginated-data
+    [function fn-kwargs]
+    (loop [results []
+           page 0]
+      (let [response (apply function
+                            [(merge {:page page} fn-kwargs)])
+            accumulated-results (into results response)
+            ;; Stop after 16 pages (~1000 users)
+            ;; or if the next page had zero entries
+            continue? (and (< page request-page-limit)
+                           (< 0 (count response)))]
+        (if continue?
+          (do
+            (Thread/sleep 1000)
+            (recur accumulated-results
+                   (inc page)))
+          accumulated-results))))
+
+  (defn active-users-by-channel-id
+    [channel-id]
+    (request-paginated-data users/users-get
+                            {:active true :in-channel channel-id}))
+
+  (count (active-users-by-channel-id channel-id))
+  (first (active-users-by-channel-id channel-id))
+
+  ;; OK cool so we can isolate the paginated data request. Now, where is the
+  ;; right place to handle the translation processing?
+
+
+  
   ) ;; Comment ends here
