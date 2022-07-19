@@ -568,6 +568,7 @@
   ;; system I found as a compelling alternative to Stuart Sierra's `component`,
 
   ;; https://practical.li/clojure-web-services/repl-driven-development/integrant-repl/
+  ;; https://www.pixelated-noise.com/blog/2022/04/28/integrant-and-aero/index.html
 
   ;; I know I'm going to have to move towards a component model anyway
   ;; for testing and separating out pure from impure functions, so.
