@@ -511,7 +511,8 @@
     [channel-id]
     (loop [results []
            page 0]
-      (let [body (users/users-get {:page page :active true :in-channel channel-id})
+      (let [body (users/users-get
+                  {:page page :active true :in-channel channel-id})
             processed (map coffee/mattermost-user->user body)
             accumulated-results (into results processed)
             ;; Stop after 16 pages (~ 1000 users)
@@ -545,6 +546,30 @@
 
   ;; TODO How would I TDD this? How would I spec this? Can I leverage `spec`?
 
+  ;; I think my next step is figure out how to make this testable
+  ;; https://www.reddit.com/r/Clojure/comments/9vezcb/comment/e9cjl19/ seems
+  ;; like the best resource
+
+  ;; Start thinking about splitting the smallest piece of my above
+  ;; `active-users-by-channel-id` out as the piece with the side effect
+  ;; (the actual http call? the function that calls the mattermost library and
+  ;; no more?) and that can't be tested, only mocked / stubbed.
 
 
+  
   ) ;; Commend ends here
+
+(comment
+;;; 2022-07-18 Next steps (not my current issue)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Practicalli seems to design web services around `integrant` (for components)
+  ;; and `aero` (for config). I know I like aero. Integrant seemed like the one
+  ;; system I found as a compelling alternative to Stuart Sierra's `component`,
+
+  ;; https://practical.li/clojure-web-services/repl-driven-development/integrant-repl/
+
+  ;; I know I'm going to have to move towards a component model anyway
+  ;; for testing and separating out pure from impure functions, so.
+
+  ) ;; Comment ends here
