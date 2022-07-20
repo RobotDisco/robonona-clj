@@ -21,8 +21,19 @@
 (spec/def ::user/id string?)
 (spec/def ::user/username string?)
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
+(spec/def ::user/users (spec/coll-of ::user))
 
 (spec/def ::json/user (spec/keys :req-un [::user/id ::user/username]))
+
+
+;;; Mattermost API results
+;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;; Encoding responses from mattermost HTTP servers
+
+(spec/def ::success boolean?)
+(spec/def ::reason (spec/or :int int? :keyword keyword?))
+(spec/def ::api-result (spec/keys :req [::success]
+                                  :opt [::reason]))
 
 
 ;;; Generic Mattermost HTTP request logic
@@ -132,7 +143,46 @@
 
 (spec/fdef active-users-by-channel-id
   :args (spec/cat :host string? :token string? :channel-id string?)
-  :ret (spec/coll-of ::user/user))
+  :ret ::user/users)
+
+
+(defn message-users
+  "Message the people in `users` with the provided `message`.
+
+  Note: This will create a group chat with all the specified users as well as
+  the account representing this program in mattermost."
+  [host token users message]
+  (let [response (http/post (str "https://"
+                                 host
+                                 "/api/v4"
+                                 "/channels/group")
+                            {:headers
+                             {"Authorization" (str "Bearer " token)}
+                             :body (map ::user/id users)
+                             :content-type :json})
+        status (:status response)
+        channel-id (get-in response [:body :id])]
+    (cond
+      (not (= 201 status)) {::success false ::reason status}
+      (not channel-id) {::success false ::reason :channel-id-missing}
+      :else
+      (let [response (http/post (str "https://"
+                                     host
+                                     "/api/v4"
+                                     "/posts")
+                                {:headers
+                                 {"Authorization" (str "Bearer " token)}
+                                 :content-type :json
+                                 :body {"channel_id" channel-id
+                                        "message" message}})
+            status (:status response)]
+        (if (= 201 status)
+          {::success true}
+          {::success false ::reason status})))))
+
+(spec/fdef message-users
+  :args (spec/cat :host string? :token string? :users ::user/users :message string?)
+  :ret ::api-result)
 
 
 ;;; Scratchpad

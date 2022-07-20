@@ -773,47 +773,89 @@
   
   ;; Get channel ID
   
-  (-> (http/get (str "https://" host
-                     "/api/v4"
-                     "/teams/name/"
-                     team
-                     "/channels/name/"
-                     channel)
-                {:query-params {"team_name" team
-                                "channel_name" channel}
-                 :headers {"Authorization" (str "Bearer " token)}
-                 :as :json})
-      :body)
-  ;; => {:total_msg_count 105,
-  ;;     :total_msg_count_root 312,
-  ;;     :purpose
-  ;;     "Have a coffeecat with potentially any tulip employee located aNyWhErE",
-  ;;     :extra_update_at 0,
-  ;;     :name "coffeebot-everywhere",
-  ;;     :update_at 1585320629807,
-  ;;     :policy_id nil,
-  ;;     :type "O",
-  ;;     :header
-  ;;     "Every Tuesday morning, get paired up with people at tulip to videochat over coffee! or chats! Or expanding social horizons!\n\nFor features/issues: https://github.com/RobotDisco/mattermost-bagel/issues",
-  ;;     :creator_id "iuqt7hgyypfsdjr1nfi96u9wwe",
-  ;;     :last_post_at 1657750370457,
-  ;;     :scheme_id nil,
-  ;;     :group_constrained nil,
-  ;;     :id "xu5t8og6o3yfmbj3bxbymy4wqa",
-  ;;     :delete_at 0,
-  ;;     :shared nil,
-  ;;     :team_id "uqbg8wcabtdb7k6hwu7syd1eqc",
-  ;;     :display_name "coffeebot-everywhere",
-  ;;     :create_at 1584705627458,
-  ;;     :props nil}
+  (http/get (str "https://" host
+                 "/api/v4"
+                 "/teams/name/"
+                 team
+                 "/channels/name/"
+                 channel)
+            {:query-params {"team_name" team
+                            "channel_name" channel}
+             :headers {"Authorization" (str "Bearer " token)}
+             :as :json})
+  ;; => {:request-time 172,
+  ;;     :repeatable? false,
+  ;;     :protocol-version {:name "HTTP", :major 1, :minor 1},
+  ;;     :streaming? true,
+  ;;     :chunked? false,
+  ;;     :reason-phrase "OK",
+  ;;     :headers
+  ;;     {"Server" "nginx",
+  ;;      "X-Version-Id" "5.37.0.5.37.0.382b8f8ad6d3fff622a71fe7f16f7a5d.true",
+  ;;      "Content-Type" "application/json",
+  ;;      "Content-Length" "740",
+  ;;      "Connection" "close",
+  ;;      "Expires" "0",
+  ;;      "Date" "Wed, 20 Jul 2022 22:07:45 GMT",
+  ;;      "Vary" "Accept-Encoding",
+  ;;      "X-Request-Id" "fbyebdxzqjgsjcusyq65d5opua"},
+  ;;     :orig-content-encoding nil,
+  ;;     :status 200,
+  ;;     :length 740,
+  ;;     :body
+  ;;     {:total_msg_count 105,
+  ;;      :total_msg_count_root 312,
+  ;;      :purpose
+  ;;      "Have a coffeecat with potentially any tulip employee located aNyWhErE",
+  ;;      :extra_update_at 0,
+  ;;      :name "coffeebot-everywhere",
+  ;;      :update_at 1585320629807,
+  ;;      :policy_id nil,
+  ;;      :type "O",
+  ;;      :header
+  ;;      "Every Tuesday morning, get paired up with people at tulip to videochat over coffee! or chats! Or expanding social horizons!\n\nFor features/issues: https://github.com/RobotDisco/mattermost-bagel/issues",
+  ;;      :creator_id "iuqt7hgyypfsdjr1nfi96u9wwe",
+  ;;      :last_post_at 1657750370457,
+  ;;      :scheme_id nil,
+  ;;      :group_constrained nil,
+  ;;      :id "xu5t8og6o3yfmbj3bxbymy4wqa",
+  ;;      :delete_at 0,
+  ;;      :shared nil,
+  ;;      :team_id "uqbg8wcabtdb7k6hwu7syd1eqc",
+  ;;      :display_name "coffeebot-everywhere",
+  ;;      :create_at 1584705627458,
+  ;;      :props nil},
+  ;;     :trace-redirects []}
+  
 
-  
-  
+
   )  ;; Comment ends here
 
 (comment
-  ;;; 2022-07-20 Get channel by team and c
-  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+  ;;; 2022-07-20 Message people who are (un)matched
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+  ;; Hmm. How do I test a side-effect?
+  ;; How do I red-green-refactor a side effect?
 
+  ;; Can I test around the side effect and care only about its input and output?
+  ;; Reading up on things, it seems like a lot of people feel the side-effects
+  ;; don't matter?
 
+  ;; There are frameworks like `spy`. Except maybe I don't care other than being
+  ;; able to control redefining key functions like [[http/get]] with
+  ;; [[with-redefs]] for faking.
+
+  ;; There are probably times I care about whether a particular outside function are
+  ;; called or how many times it is called.
+  ;; Right now I am not sure if I am in any of those times.
+
+  ;; Unrelated
+  ;; I played around with a macro called `better-cond`. It supposedly makes
+  ;; nested conditionals look a lot nicer.
+  ;;
+  ;; While that is true, emacs' syntax checking can't handle it. Sad.
+
+  
+
+  ) ;; Comment ends here

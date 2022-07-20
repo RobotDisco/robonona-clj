@@ -37,6 +37,15 @@
               (contains? (:ret %) ::unmatched-user))))
 
 
+(defn message-matched-users
+  [user1 user2]
+  true)
+
+(spec/fdef message-matched-users
+  :args (spec/cat :user1 ::user/user :user2 ::user/user)
+  :ret boolean?)
+
+
 
 ;;; Test data
 ;;;;;;;;;;;;;

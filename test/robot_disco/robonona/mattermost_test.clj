@@ -88,6 +88,20 @@
 
 
 
+(deftest message-users
+  (testing "Happy path"
+    (with-redefs [http/post (fn [_ _]
+                              {:status 201
+                               :body {:id "Hp685SU5xpJ928wkx8yulq1QsGk"}})]
+      (let [users '({:id "5qwdq6", :username "34EUwgaR"}
+                    {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"})
+            fake-message "hello"
+            result (SUT/message-users fake-host fake-token users
+                                      fake-message)]
+        (is (true? (::SUT/success result)))))))
+
+
+
 ;;; Generative testing
 (comment
   ;; Maybe these should be their own suite of tests? Can I do that without

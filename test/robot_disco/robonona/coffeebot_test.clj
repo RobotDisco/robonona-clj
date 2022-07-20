@@ -12,7 +12,8 @@
 ;; Turn these on when developing or troubleshooting
 
 (def ^:private tests-to-instrument
-  `[SUT/match-users])
+  `[SUT/match-users
+    SUT/message-matched-pairs])
 
 
 (defn instrumentation-fixture [f]
@@ -63,8 +64,17 @@
                :check-passed))))
 
 
+(deftest message-matched-users
+  (testing "happy path"
+    (let [user1 #::user{:id "7L", :username "343GF"}
+          user2 #::user{:id "55", :username "6HS"}
+          result (SUT/message-matched-users user1 user2)]
+      (is (true? result)))))
+
 
 (comment
+
+  (require '[clojure.spec.gen.alpha :as spec-gen])
 
   ;; Moving files over broke my specifications b/c keywords.
   (spec/explain ::SUT/users [])
@@ -77,6 +87,12 @@
   (spec-test/check `SUT/match-users)
   (spec-test/summarize-results (spec-test/check `SUT/match-users))
 
-
+  (spec-gen/sample (spec/gen ::user/user))
+  ;;     #:robot-disco.robonona.mattermost.user{:id "xb7c", :username ""}
+  ;;     #:robot-disco.robonona.mattermost.user{:id "Gu2", :username "03r"}
+  ;;     #:robot-disco.robonona.mattermost.user{:id "", :username "A7"}
+  ;;     #:robot-disco.robonona.mattermost.user{:id "9Rz81", :username "OU5YBKo"}
+  ;;     #:robot-disco.robonona.mattermost.user{:id "2LHe", :username "i9A8jU7P"}
+  ;;     #:robot-disco.robonona.mattermost.user{:id "8q99D", :username "75VmBe"})
 
   ) ;; Comment ends here
