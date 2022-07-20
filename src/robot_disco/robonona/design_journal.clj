@@ -564,7 +564,7 @@
   ) ;; Comment ends here
 
 (comment
-;;; 2022-07-18 Next steps (not my current issue)
+;;; 2022-07-18 TODO Next steps (not my current issue)
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;; Practicalli seems to design web services around `integrant` (for components)
@@ -737,7 +737,6 @@
 
   )  ;; Comment ends here
 
-
 (comment
   ;;; 2022-07-20 Refactoring
   ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -761,3 +760,60 @@
 
 
   )  ;; Comment ends here
+
+(comment
+  ;;; 2022-07-20 Get channel by team and channel name
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  (def team "general")
+  (def channel "coffeebot-everywhere")
+
+  (def token (System/getenv "ROBONONA_MATTERMOST_TOKEN"))
+  (def host "mattermost.internal.tulip.io")
+  
+  ;; Get channel ID
+  
+  (-> (http/get (str "https://" host
+                     "/api/v4"
+                     "/teams/name/"
+                     team
+                     "/channels/name/"
+                     channel)
+                {:query-params {"team_name" team
+                                "channel_name" channel}
+                 :headers {"Authorization" (str "Bearer " token)}
+                 :as :json})
+      :body)
+  ;; => {:total_msg_count 105,
+  ;;     :total_msg_count_root 312,
+  ;;     :purpose
+  ;;     "Have a coffeecat with potentially any tulip employee located aNyWhErE",
+  ;;     :extra_update_at 0,
+  ;;     :name "coffeebot-everywhere",
+  ;;     :update_at 1585320629807,
+  ;;     :policy_id nil,
+  ;;     :type "O",
+  ;;     :header
+  ;;     "Every Tuesday morning, get paired up with people at tulip to videochat over coffee! or chats! Or expanding social horizons!\n\nFor features/issues: https://github.com/RobotDisco/mattermost-bagel/issues",
+  ;;     :creator_id "iuqt7hgyypfsdjr1nfi96u9wwe",
+  ;;     :last_post_at 1657750370457,
+  ;;     :scheme_id nil,
+  ;;     :group_constrained nil,
+  ;;     :id "xu5t8og6o3yfmbj3bxbymy4wqa",
+  ;;     :delete_at 0,
+  ;;     :shared nil,
+  ;;     :team_id "uqbg8wcabtdb7k6hwu7syd1eqc",
+  ;;     :display_name "coffeebot-everywhere",
+  ;;     :create_at 1584705627458,
+  ;;     :props nil}
+
+  
+  
+  )  ;; Comment ends here
+
+(comment
+  ;;; 2022-07-20 Get channel by team and c
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+

@@ -8,6 +8,7 @@
 
             [robot-disco.robonona.mattermost.json :as-alias json]
             [robot-disco.robonona.mattermost.user :as-alias user]
+            [robot-disco.robonona.mattermost.channel :as-alias channel]
             
             [robot-disco.robonona.mattermost :as SUT]))
 
@@ -18,7 +19,8 @@
 
 (def ^:private tests-to-instrument
   `[SUT/active-users-by-channel-id
-    SUT/json-user->user])
+    SUT/json-user->user
+    SUT/channel-id-by-team-name-and-channel-name])
 
 
 (defn instrumentation-fixture [f]
@@ -35,19 +37,41 @@
 (def fake-token "faketoken")
 (def fake-host "mattermost.test.com")
 
+(def fake-team-name "faketeam")
+(def fake-channel-name "fakechannel")
+
 (def fake-channel-id "3462bshfgh567i86efgghsdgh4")
+
 (def fake-response (list {:username "fake.user",
                           :id "5df6sdfgh4534bdfb342346dws"}
                          {:id "5qwdq6", :username "34EUwgaR"}
                          {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}))
 
+
+;;; Tests
+;;;;;;;;;
+
 (deftest active-users-by-channel-id
   (testing "Happy path"
+    ;; This is how we mock/fake things simply
     (with-redefs [http/get (fn [_ _] {:body fake-response})]
       (let [result (SUT/active-users-by-channel-id fake-host
                                                    fake-token
                                                    fake-channel-id)]
         (is (spec/valid? (spec/coll-of ::user/user) result))))))
+
+
+(deftest channel-id-by-team-name-and-channel-name
+  (testing "Happy path"
+    ;; This is how we mock/fake things simply
+    (with-redefs [http/get (fn [_ _] {:body {:id fake-channel-id}})]
+      (let [result (SUT/channel-id-by-team-name-and-channel-name
+                    fake-host
+                    fake-token
+                    fake-team-name
+                    fake-channel-name)]
+        (is (spec/valid? ::channel/id result))))))
+
 
 (def json-user-mock (spec-gen/generate (spec/gen ::json/user)))
 

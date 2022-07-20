@@ -3,7 +3,9 @@
             [clojure.spec.alpha :as spec]
             [clj-http.client :as http]
             [robot-disco.robonona.mattermost.user :as-alias user]
-            [robot-disco.robonona.mattermost.json :as-alias json]))
+            [robot-disco.robonona.mattermost.json :as-alias json]
+            [robot-disco.robonona.mattermost.channel :as-alias channel]
+            [robot-disco.robonona.mattermost.team :as-alias team]))
 
 
 ;;; Mattermost data specifications
@@ -11,7 +13,11 @@
 ;; Data as returned to us from mattermost APIs.
 ;;
 ;;
-;; Thus far this is the same format for all entity id fields.
+(spec/def ::team/name string?)
+(spec/def ::channel/name string?)
+(spec/def ::channel/id string?)
+
+
 (spec/def ::user/id string?)
 (spec/def ::user/username string?)
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
@@ -38,6 +44,10 @@
   1000)
 
 
+;;; Data conversion
+;;;;;;;;;;;;;;;;;;;
+;; Convert JSON shapes to more powerful internal ones
+
 
 (defn json-user->user
   "Convert mattermost's user structure info coffeebot's user structure."
@@ -57,6 +67,28 @@
 
 ;;; Mattermost User calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;
+
+
+(defn channel-id-by-team-name-and-channel-name
+  [host token team-name channel-name]
+  (let [url (str "https://"
+                 host
+                 "/api/v4"
+                 "/teams/name/"
+                 team-name
+                 "/channels/name/"
+                 channel-name)
+        result (http/get url
+                         {:header {"Authorization" (str "Bearer " token)}
+                          :as :json})]
+    (-> result :body :id)))
+
+(spec/fdef channel-id-by-team-name-and-channel-name
+  :args (spec/cat :host string?
+                  :token string?
+                  :team-name ::team/name
+                  :channel-name ::channel/name)
+  :ret ::channel/id)
 
 
 (defn active-users-by-channel-id
@@ -101,7 +133,6 @@
 (spec/fdef active-users-by-channel-id
   :args (spec/cat :host string? :token string? :channel-id string?)
   :ret (spec/coll-of ::user/user))
-
 
 
 ;;; Scratchpad
