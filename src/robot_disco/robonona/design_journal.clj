@@ -736,3 +736,28 @@
 
 
   )  ;; Comment ends here
+
+
+(comment
+  ;;; 2022-07-20 Refactoring
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Tried to move specs into centralized place, didn't like the feel of it.
+
+  ;; Refactored specs to have the `mattermost` namespace have the concept of
+  ;; JSON and app specs to handle conversion between qualified and nonqualified
+  ;; keyspaces. This allows me to reuse the specs and not feel like I have extra
+  ;; specs that are basically the same across namespaces.
+  ;;
+  ;; Found out about the `:as-alias` namespace in the [[ns]] form which allows
+  ;; me to qualify my specs even further without really creating new namespaces
+  ;; I can see myself feeling that these are just predicting future namespaces,
+  ;; however...
+  ;;
+  ;; Set up CIDER to skip generative tests, but those are in the test suite now
+  ;; Plus instrument functions I care about when testing
+  ;;
+  ;; I can reuse that fixture when developing I imagine.
+
+
+  )  ;; Comment ends here

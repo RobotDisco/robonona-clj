@@ -1,25 +1,14 @@
 (ns robot-disco.robonona.coffeebot
   (:require [clojure.spec.alpha :as spec]
-            [clojure.set]))
-
-
-;;; Coffeebot data specifications
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; It is likely we will be translating the returned API data into this form.
-;; It is unclear to me whether these should live here or in some separate
-;; mattermost translation module. It will likely depend on how "intelligent"
-;; the translaction layer and/or impure side-effectful compoent should be.
-(spec/def ::user-id string?)
-(spec/def ::username string?)
-(spec/def ::user (spec/keys :req [::user-id ::username]))
-(spec/def ::users (spec/coll-of ::user))
+            [robot-disco.robonona.mattermost]
+            [robot-disco.robonona.mattermost.user :as-alias user]))
 
 
 ;;; Coffeebot pairing specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(spec/def ::matched-pair (spec/tuple ::user ::user))
+(spec/def ::matched-pair (spec/tuple ::user/user ::user/user))
 (spec/def ::matched-pairs (spec/coll-of ::matched-pair))
-(spec/def ::unmatched-user ::user)
+(spec/def ::unmatched-user ::user/user)
 (spec/def ::matches (spec/keys :req [::matched-pairs]
                                :opt [::unmatched-user]))
 
@@ -37,7 +26,7 @@
        ::unmatched-user (first shuffled)})))
 
 (spec/fdef match-users
-  :args (spec/cat :users ::users)
+  :args (spec/cat :users (spec/coll-of ::user/user))
   :ret ::matches
   ;; Length of pairs should be approximately half the length of candidate users
   ;; We should only get an unmatched user if the input list has an odd length.
@@ -46,22 +35,6 @@
             #(if (even? (count (-> % :args :users)))
               (not (contains? (:ret  %) ::unmatched-user))
               (contains? (:ret %) ::unmatched-user))))
-
-
-(defn mattermost-user->user
-  "Convert mattermost's user structure info coffeebot's user structure."
-  [mm-user]
-  (clojure.set/rename-keys mm-user
-                           {:id ::user-id
-                            :username ::username}))
-
-(spec/fdef mattermost-user->user
-  :args (spec/cat :mm-user ::mattermost-user)
-  :ret ::user
-  :fn #(let [input (-> % :args :mm-user)
-             output (-> % :ret)]
-         (spec/and (= (:id input) (::user-id output))
-                   (= (:username input) (::username output)))))
 
 
 

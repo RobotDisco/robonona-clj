@@ -1,10 +1,36 @@
 (ns robot-disco.robonona.mattermost-test
   (:require [clojure.spec.alpha :as spec]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.spec.gen.alpha :as spec-gen]
+            [clojure.spec.test.alpha :as spec-test]
+            [clojure.test :refer [deftest testing is use-fixtures]]
 
             [clj-http.client :as http]
+
+            [robot-disco.robonona.mattermost.json :as-alias json]
+            [robot-disco.robonona.mattermost.user :as-alias user]
             
             [robot-disco.robonona.mattermost :as SUT]))
+
+
+;;; Functions to instrument
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Turn these on when developing or troubleshooting
+
+(def ^:private tests-to-instrument
+  `[SUT/active-users-by-channel-id
+    SUT/json-user->user])
+
+
+(defn instrumentation-fixture [f]
+  (spec-test/instrument tests-to-instrument)
+  (f)
+  (spec-test/unstrument tests-to-instrument))
+
+(use-fixtures :once instrumentation-fixture)
+
+;;; Fake and mock data
+;;;;;;;;;;;;;;;;;;;;;;
+
 
 (def fake-token "faketoken")
 (def fake-host "mattermost.test.com")
@@ -21,8 +47,35 @@
       (let [result (SUT/active-users-by-channel-id fake-host
                                                    fake-token
                                                    fake-channel-id)]
-        (is (spec/valid? ::SUT/users result))))))
+        (is (spec/valid? (spec/coll-of ::user/user) result))))))
 
+(def json-user-mock (spec-gen/generate (spec/gen ::json/user)))
+
+(deftest json-user->user
+  (let [result (SUT/json-user->user json-user-mock)]
+    (is (= (::user/id result) (:id json-user-mock)))
+    (is (= (::user/username result) (:username json-user-mock)))
+    (is (spec/valid? ::user/user result))))
+
+(deftest ^:generative json-user->user-generative
+  (is (= 1 (-> (spec-test/check `SUT/json-user->user)
+               (spec-test/summarize-results)
+               :check-passed))))
+
+
+
+;;; Generative testing
+(comment
+  ;; Maybe these should be their own suite of tests? Can I do that without
+  ;; running them each time?
+
+  ;; Can't test `active-users-by-channel-id` without faking a response, not
+  ;; sure if it is worth it honestly as the real data logic lives elsewhere.
+  (spec-test/check `[SUT/json-user->user])
+
+
+
+  )  ;; Comment ends here
 
 
 ;;; Scratchpad

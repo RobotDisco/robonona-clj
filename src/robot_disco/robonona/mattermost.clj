@@ -1,21 +1,22 @@
 (ns robot-disco.robonona.mattermost
-  (:require [clojure.spec.alpha :as spec]
-            [clj-http.client :as http]))
+  (:require [clojure.set]
+            [clojure.spec.alpha :as spec]
+            [clj-http.client :as http]
+            [robot-disco.robonona.mattermost.user :as-alias user]
+            [robot-disco.robonona.mattermost.json :as-alias json]))
 
 
 ;;; Mattermost data specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Data as returned to us from mattermost APIs.
 ;;
-;; This probably should live in its own class, handling mattermost data feels
-;; like a unit of responsibility
-
+;;
 ;; Thus far this is the same format for all entity id fields.
-(spec/def ::id string?)
+(spec/def ::user/id string?)
+(spec/def ::user/username string?)
+(spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
 
-(spec/def ::username string?)
-(spec/def ::user (spec/keys :req-un [::id ::username]))
-(spec/def ::users (spec/coll-of ::user))
+(spec/def ::json/user (spec/keys :req-un [::user/id ::user/username]))
 
 
 ;;; Generic Mattermost HTTP request logic
@@ -35,6 +36,23 @@
 (def interval-between-requests
   "Number of milliseconds to sleep between page requests."
   1000)
+
+
+
+(defn json-user->user
+  "Convert mattermost's user structure info coffeebot's user structure."
+  [mm-user]
+  (clojure.set/rename-keys mm-user
+                           {:id ::user/id
+                            :username ::user/username}))
+
+(spec/fdef json-user->user
+  :args (spec/cat :mm-user ::json/user)
+  :ret ::user/user
+  :fn #(let [input (-> % :args :mm-user)
+             output (-> % :ret)]
+         (spec/and (= (:id input) (::user/id output))
+                   (= (:username input) (::user/username output)))))
 
 
 ;;; Mattermost User calls
@@ -65,11 +83,12 @@
                                      :headers {"Authorization" (str "Bearer "
                                                                     token)}
                                      :as :json}))
-          accumulated-results (into results response)
+          processed (map json-user->user response)
+          accumulated-results (into results processed)
           ;; Stop after 16 pages (~1000 users)
           ;; or if the next page had zero entries
           continue? (and (< page request-page-limit)
-                         (= (count response) max-items-per-page))]
+                         (= (count processed) max-items-per-page))]
       (if continue?
         (do
           ;; Sleep between page requests as to not overwhelm the
@@ -81,7 +100,7 @@
 
 (spec/fdef active-users-by-channel-id
   :args (spec/cat :host string? :token string? :channel-id string?)
-  :ret ::users)
+  :ret (spec/coll-of ::user/user))
 
 
 

@@ -2,15 +2,33 @@
   (:require
    [clojure.spec.alpha :as spec]
    [clojure.spec.test.alpha :as spec-test]
-   [clojure.test :refer [deftest is testing]]
-   [robot-disco.robonona.coffeebot :as SUT]))
+   [clojure.test :refer [deftest is testing use-fixtures]]
+   [robot-disco.robonona.coffeebot :as SUT]
+   [robot-disco.robonona.mattermost.user :as-alias user]))
+
+
+;;; Functions to instrument
+;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Turn these on when developing or troubleshooting
+
+(def ^:private tests-to-instrument
+  `[SUT/match-users])
+
+
+(defn instrumentation-fixture [f]
+  (spec-test/instrument tests-to-instrument)
+  (f)
+  (spec-test/unstrument tests-to-instrument))
+
+(use-fixtures :once instrumentation-fixture)
+
 
 ;; Mock data
 ;;;;;;;;;;;;
 
 (def mock-user
-  #:robot-disco.robonona.coffeebot
-  {:user-id "aaa"
+  #:robot-disco.robonona.mattermost.user
+  {:id "aaa"
    :username "a@test.com"})
 
 (def even-mock-user-list
@@ -37,19 +55,14 @@
           result (SUT/match-users users)]
       (is (= (count (::SUT/matched-pairs result)) (/ (dec (count users)) 2)))
       (is (contains? result ::SUT/unmatched-user))
-      (is (spec/valid? ::SUT/matches result))))
-  (testing "generative testing"
-    (is (= 1 (-> (spec-test/check `SUT/match-users)
-                 (spec-test/summarize-results)
-                 :check-passed)))))
+      (is (spec/valid? ::SUT/matches result)))))
 
-(deftest mattermost-user->user
-  (let [result (SUT/mattermost-user->user mock-mattermost-user)]
-    (is (= result
-           #::SUT
-           {:user-id "34ib5j6khbfjebfjgb356hjdhg"
-            :username "gaelan.dcosta"}))
-    (is (spec/valid? ::SUT/user result))))
+(deftest ^:generative match-users-generative
+  (is (= 1 (-> (spec-test/check `SUT/match-users)
+               (spec-test/summarize-results)
+               :check-passed))))
+
+
 
 (comment
 
