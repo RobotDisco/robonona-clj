@@ -7,11 +7,15 @@
    [clojure.spec.gen.alpha :as spec-gen]
    [clojure.spec.test.alpha :as spec-test]
    ;; Mattermost API client
-   [mattermost-clj.core :as mattermost]
-   [mattermost-clj.api.channels :as channels]
-   [mattermost-clj.api.users :as users]
+   ;; [mattermost-clj.core :as mattermost]
+   ;; [mattermost-clj.api.channels :as channels]
+   ;; [mattermost-clj.api.users :as users]
+   ;; HTTP client
+   [clj-http.client :as http]
+   [cheshire.core :as json]
    ;; Application logic
-   [robot-disco.robonona.coffeebot :as coffee]))
+   [robot-disco.robonona.coffeebot :as coffee]
+   [robot-disco.robonona.mattermost :as coffeemm]))
 
 ;;; I don't want these exploratory expressions running every single time I load
 ;;; the file; they might do side-effectful things with the systems I am
@@ -615,6 +619,120 @@
   ;; OK cool so we can isolate the paginated data request. Now, where is the
   ;; right place to handle the translation processing?
 
+  (defn active-users-by-channel-id
+    [channel-id]
+    (let [response (request-paginated-data
+                    users/users-get
+                    {:active true :in-channel channel-id})]
+      (map coffee/mattermost-user->user response)))
 
-  
+  (first (active-users-by-channel-id channel-id))
+
+  ;; Do I really want to do this map over and over in every call? If I was doing
+  ;; TDD first, then yes. I really want to move processing into
+  ;; `request-paginated-data` intuitively, but that might be premature
+  ;; optimization. Really at this point I should be thinking about TDDing http
+  ;; calls.
+
+  ;; Luckily the mattermost api library uses `clj-http`, which is easy to mock
+  ;; via the recommended `clj-http-fake` library. Let's start TDDing a
+  ;; mattermost side-effectful component.
+
+
+
   ) ;; Comment ends here
+
+(comment
+;;; 2022-07-19 `active-users-by-channel-id` via TDD
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Moving mattermost API specs into new `mattermost` namespace.
+
+  ;; Revised TDD practice (based on practicalli website)
+  ;; 1. Write test, don't both defining data just yet outside `is` statements.
+  ;; 2. Model concrete instances data models you need, existing or new.
+  ;;    Plug them into your test, which will still fail.
+  ;; 3. Write a definition of your test where it just returns the input
+  ;; 4. Write/extend specs for the input and output data models, if necessary.
+  ;; 5. Verify that your fake model data conforms to said spec. Use generated
+  ;;    spec data in test(replacing mocked atoms, extending mocked collections.)
+  ;; 6. Implement function, make it pass, validate output's spec
+  ;; 7. Write `fdef`, definitly `:ret` and `:arg`, ideally `:fn`
+  ;; 8. Use `spec-test/instrument` with generated inputs to validate function
+  ;; 9. If `:fn` was used, run `spec-test/check` to do property-based testing.
+  ;; 10. Document functions
+  ;; 11. Refactor if desired
+
+
+
+  ) ;; Comment ends here
+
+(comment
+  ;;; 2022-07-19 A Snag: Abandoning `mattermost-clj`
+
+  ;; Turns out I can't use `mattermost-clj` and `clj-http.fake` because of the
+  ;; way `clojure.test` evals stuff. I'm going to have to write code that calls
+  ;; `clj-http` directly.
+
+  (def token (System/getenv "ROBONONA_MATTERMOST_TOKEN"))
+  (def host "mattermost.internal.tulip.io")
+
+  (def team "general")
+  (def channel "coffeebot-everywhere")
+
+  ;; Get channel ID
+  
+  (def channel-id (-> (http/get (str "https://" host
+                                     "/api/v4"
+                                     "/teams/name/"
+                                     team
+                                     "/channels/name/"
+                                     channel)
+                       {:query-params {"team_name" team
+                                       "channel_name" channel}
+                        :headers {"Authorization" (str "Bearer " token)}
+                        :as :json})
+                      :body
+                      :id))
+
+  ;; Get active users
+
+  (:body (http/get (str "https://" host
+                        "/api/v4"
+                        "/users")
+                   {:query-params {"page" 0
+                                   "per_page" 60
+                                   "active" true
+                                   "in-channel" channel-id}
+                    :headers {"Authorization" (str "Bearer " token)}
+                    :as :json}))
+
+  ;; OK, reimplement `active-users-by-channel-id` using this. Soft-restart the
+  ;; process from the start since I need to pass in the token and host
+  ;; and can't assume some context is being held for me with that info.
+  ;;
+  ;; Or fuck it, implement my own context? Maybe it's a good pattern? Those
+  ;; values never change throughout the app lifecycle anyway...
+
+  ;; Ended up deciding a context was too overkill for now. Maybe writing more
+  ;; code will show me what patterns are useful...
+  ;; Trying out `with-redefs` as *in theory* that it is the simplest form.
+  ;;
+  ;; Realized `clj-http-fake` forces you to pull your code into the test
+  ;; namespace, which feels which feels janky. With the author could have said
+  ;; that instead of being an unhelpful asshat.
+
+  (http/get "http://www.google.com")
+  (with-redefs [http/get (fn [_] {:body "Eat my shorts!"})]
+    (http/get "http://www.google.com"))
+  ;; => {:body "Eat my shorts!"}
+
+  ;; The heck, why doesn't it work in my code...
+  ;; Oh just needed to reload things...
+
+  ;; I am sure this will wind up being annoying and I'll want a better fake/mock
+  ;; as my calls get more complex...
+
+
+
+  )  ;; Comment ends here

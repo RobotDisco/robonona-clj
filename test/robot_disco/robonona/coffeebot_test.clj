@@ -49,10 +49,7 @@
            #::SUT
            {:user-id "34ib5j6khbfjebfjgb356hjdhg"
             :username "gaelan.dcosta"}))
-    (testing "generative tests"
-      (is (= 1 (-> (spec-test/check `SUT/mattermost-user->user)
-                   (spec-test/summarize-results)
-                   :check-passed))))))
+    (is (spec/valid? ::SUT/user result))))
 
 (comment
 

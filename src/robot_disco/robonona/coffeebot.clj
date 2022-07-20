@@ -15,17 +15,6 @@
 (spec/def ::users (spec/coll-of ::user))
 
 
-;;; Mattermost data specifications
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Data as returned to us from mattermost APIs.
-;;
-;; This probably should live in its own class, handling mattermost data feels
-;; like a unit of responsibility
-
-(spec/def ::id ::user-id)
-(spec/def ::mattermost-user (spec/keys :req-un [::id ::username]))
-
-
 ;;; Coffeebot pairing specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (spec/def ::matched-pair (spec/tuple ::user ::user))
@@ -68,7 +57,11 @@
 
 (spec/fdef mattermost-user->user
   :args (spec/cat :mm-user ::mattermost-user)
-  :ret ::user)
+  :ret ::user
+  :fn #(let [input (-> % :args :mm-user)
+             output (-> % :ret)]
+         (spec/and (= (:id input) (::user-id output))
+                   (= (:username input) (::username output)))))
 
 
 
