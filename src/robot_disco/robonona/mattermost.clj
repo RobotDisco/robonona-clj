@@ -2,8 +2,9 @@
   (:require [clojure.set]
             [clojure.spec.alpha :as spec]
             [clj-http.client :as http]
+            [cheshire.core :as json]
             [robot-disco.robonona.mattermost.user :as-alias user]
-            [robot-disco.robonona.mattermost.json :as-alias json]
+            [robot-disco.robonona.mattermost.json :as-alias json-user]
             [robot-disco.robonona.mattermost.channel :as-alias channel]
             [robot-disco.robonona.mattermost.team :as-alias team]))
 
@@ -23,7 +24,7 @@
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
 (spec/def ::user/users (spec/coll-of ::user))
 
-(spec/def ::json/user (spec/keys :req-un [::user/id ::user/username]))
+(spec/def ::json-user/user (spec/keys :req-un [::user/id ::user/username]))
 
 
 ;;; Mattermost API results
@@ -68,7 +69,7 @@
                             :username ::user/username}))
 
 (spec/fdef json-user->user
-  :args (spec/cat :mm-user ::json/user)
+  :args (spec/cat :mm-user ::json-user/user)
   :ret ::user/user
   :fn #(let [input (-> % :args :mm-user)
              output (-> % :ret)]
@@ -91,7 +92,7 @@
                  channel-name)
         result (http/get url
                          {:header {"Authorization" (str "Bearer " token)}
-                          :as :json})]
+                          :as :json-user})]
     (-> result :body :id)))
 
 (spec/fdef channel-id-by-team-name-and-channel-name
@@ -158,8 +159,9 @@
                                  "/channels/group")
                             {:headers
                              {"Authorization" (str "Bearer " token)}
-                             :body (map ::user/id users)
-                             :content-type :json})
+                             :body (json/generate-string (map ::user/id users))
+                             :content-type :json
+                             :as :json})
         status (:status response)
         channel-id (get-in response [:body :id])]
     (cond
@@ -173,8 +175,9 @@
                                 {:headers
                                  {"Authorization" (str "Bearer " token)}
                                  :content-type :json
-                                 :body {"channel_id" channel-id
-                                        "message" message}})
+                                 :body (json/generate-string
+                                        {"channel_id" channel-id
+                                         "message" message})})
             status (:status response)]
         (if (= 201 status)
           {::success true}
@@ -182,6 +185,49 @@
 
 (spec/fdef message-users
   :args (spec/cat :host string? :token string? :users ::user/users :message string?)
+  :ret ::api-result)
+
+
+(defn message-user
+  "As `me`, Message `user` with the provided `message`."
+  [host token me user message]
+  (let [response (http/post (str "https://"
+                                 host
+                                 "/api/v4"
+                                 "/channels/direct")
+                            {:headers
+                             {"Authorization" (str "Bearer " token)}
+                             :body (json/generate-string
+                                    [(::user/id me)
+                                     (::user/id user)])
+                             :content-type :json
+                             :as :json})
+        status (:status response)
+        channel-id (get-in response [:body :id])]
+    (cond
+      (not (= 201 status)) {::success false ::reason status}
+      (not channel-id) {::success false ::reason :channel-id-missing}
+      :else
+      (let [response (http/post (str "https://"
+                                     host
+                                     "/api/v4"
+                                     "/posts")
+                                {:headers
+                                 {"Authorization" (str "Bearer " token)}
+                                 :content-type :json
+                                 :body (json/generate-string {"channel_id" channel-id
+                                                              "message" message})})
+            status (:status response)]
+        (if (= 201 status)
+          {::success true}
+          {::success false ::reason status})))))
+
+(spec/fdef message-user
+  :args (spec/cat :host string?
+                  :token string?
+                  :me ::user/user
+                  :user ::user/user
+                  :message string?)
   :ret ::api-result)
 
 

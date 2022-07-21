@@ -100,6 +100,21 @@
                                       fake-message)]
         (is (true? (::SUT/success result)))))))
 
+(deftest message-user
+  (testing "Happy path"
+    (with-redefs [http/post (fn [_ _]
+                              {:status 201
+                               :body {:id "Hp685SU5xpJ928wkx8yulq1QsGk"}})]
+      (let [me {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}
+            user {:id "5qwdq6", :username "34EUwgaR"}
+            fake-message "hello"
+            result (SUT/message-user fake-host
+                                     fake-token
+                                     me
+                                     user
+                                     fake-message)]
+        (is (true? (::SUT/success result)))))))
+
 
 
 ;;; Generative testing
