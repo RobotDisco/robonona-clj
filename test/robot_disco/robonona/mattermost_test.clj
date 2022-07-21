@@ -116,6 +116,14 @@
         (is (true? (::SUT/success result)))))))
 
 
+(deftest get-my-id
+  (let [fake-response {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}]
+    (with-redefs [http/get (fn [_ _]
+                             {:status 200
+                              :body fake-response})]
+      (let [result (SUT/get-my-id fake-host fake-token)]
+        (is (= result (:id fake-response)))))))
+
 
 ;;; Generative testing
 (comment

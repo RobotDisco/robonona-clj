@@ -846,8 +846,8 @@
   ;; able to control redefining key functions like [[http/get]] with
   ;; [[with-redefs]] for faking.
 
-  ;; There are probably times I care about whether a particular outside function are
-  ;; called or how many times it is called.
+  ;; There are probably times I care about whether a particular outside function
+  ;; are called or how many times it is called.
   ;; Right now I am not sure if I am in any of those times.
 
   ;; Unrelated
@@ -856,6 +856,17 @@
   ;;
   ;; While that is true, emacs' syntax checking can't handle it. Sad.
 
-  
+  ;; clj-user doesn't auto-coerce input into json. It will coerce output with
+  ;; the `:as` keyword.
 
   ) ;; Comment ends here
+
+
+(comment
+  ;;; 2022-07-20 A snag: I need to know my own ID
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;;; Mattermost won't let me message folk unless I know my own ID.
+
+  ;;; I can fetch it via `/api/v4/users/me` and my token so it's not too hard
+  ;;; to get.

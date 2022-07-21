@@ -91,8 +91,8 @@
                  "/channels/name/"
                  channel-name)
         result (http/get url
-                         {:header {"Authorization" (str "Bearer " token)}
-                          :as :json-user})]
+                         {:headers {"Authorization" (str "Bearer " token)}
+                          :as :json})]
     (-> result :body :id)))
 
 (spec/fdef channel-id-by-team-name-and-channel-name
@@ -230,6 +230,17 @@
                   :message string?)
   :ret ::api-result)
 
+
+(defn get-my-id
+  [host token]
+  (let [url (str "https://"
+                 host
+                 "/api/v4"
+                 "/users/me")
+        result (http/get url
+                         {:headers {"Authorization" (str "Bearer " token)}
+                          :as :json})]
+    (-> result :body :id)))
 
 ;;; Scratchpad
 ;;;;;;;;;;;;;;
