@@ -22,7 +22,7 @@
 (spec/def ::user/id string?)
 (spec/def ::user/username string?)
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
-(spec/def ::user/users (spec/coll-of ::user))
+(spec/def ::user/users (spec/coll-of ::user/user))
 
 (spec/def ::json-user/user (spec/keys :req-un [::user/id ::user/username]))
 
@@ -51,8 +51,8 @@
 
 (def default-api-context
   "Default API context."
-  {:base-url "https://your-mattermost-url.com/api/v4"
-   :auth-token "please_set_me"})
+  {::base-url "https://your-mattermost-url.com/api/v4"
+   ::auth-token "please_set_me"})
 
 
 (def ^:dynamic *api-context*
@@ -255,7 +255,7 @@
   :ret ::api-result)
 
 
-(defn get-my-id
+(defn get-my-info
   "Get user id associated with session token."
   []
   (let [url (str (::base-url *api-context*)
@@ -264,19 +264,15 @@
                          {:headers {"Authorization" (str "Bearer "
                                                          (::auth-token *api-context*))}
                           :as :json})]
-    (-> result :body :id)))
+    (-> result :body json-user->user)))
 
 (spec/fdef get-my-id
   :args (spec/cat)
-  :ret ::user/id)
+  :ret ::user/user)
 
 ;;; Scratchpad
 ;;;;;;;;;;;;;;
 (comment
 
-  (require '[clojure.spec.gen.alpha :as spec-gen])
-
-
-
-  ) ;; Comment ends here
+  (require '[clojure.spec.gen.alpha :as spec-gen])) ;; Comment ends here
 

@@ -4,7 +4,8 @@
    [clojure.spec.test.alpha :as spec-test]
    [clojure.test :refer [deftest is testing use-fixtures]]
    [robot-disco.robonona.coffeebot :as SUT]
-   [robot-disco.robonona.mattermost.user :as-alias user]))
+   [robot-disco.robonona.mattermost.user :as-alias user]
+   [clj-http.client :as http]))
 
 
 ;;; Functions to instrument
@@ -65,12 +66,13 @@
                :check-passed))))
 
 
-(deftest message-matched-users
+(deftest message-unmatched-user
   (testing "happy path"
-    (let [user1 #::user{:id "7L", :username "343GF"}
-          user2 #::user{:id "55", :username "6HS"}
-          result (SUT/message-matched-users user1 user2)]
-      (is (true? result)))))
+    (with-redefs [http/post (fn [_ _] {:status 201 :body {:id "aaa"}})]
+      (let [bot #::user{:username "whocares" :id "fakeid"}
+            user #::user{:id "55", :username "6HS"}
+            result (SUT/message-unmatched-user bot user "hello")]
+        (is (true? result))))))
 
 
 (comment

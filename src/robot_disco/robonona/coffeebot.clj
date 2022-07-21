@@ -1,6 +1,7 @@
 (ns robot-disco.robonona.coffeebot
   (:require [clojure.spec.alpha :as spec]
-            [robot-disco.robonona.mattermost]
+            [cheshire.core :as json]
+            [robot-disco.robonona.mattermost :as mattermost]
             [robot-disco.robonona.mattermost.user :as-alias user]))
 
 
@@ -12,13 +13,14 @@
 (spec/def ::matches (spec/keys :req [::matched-pairs]
                                :opt [::unmatched-user]))
 
-;;; Application logic
-;;;;;;;;;;;;;;;;;;;;;
+
+;;; Pairing Logic
+;;;;;;;;;;;;;;;;;
 
 (defn match-users
   "Group users into pairs. If odd number of users, return unmatched user."
   [users]
-  (let [shuffled (shuffle users)]
+  (let [shuffled (shuffle (map #(select-keys % [::user/id ::user/username]) users))]
     (if (even? (count shuffled))
       ;; For some reason we need vectors here to conform to `spec/tuple`
       {::matched-pairs (map vec (partition 2 shuffled))}
@@ -37,13 +39,43 @@
               (contains? (:ret %) ::unmatched-user))))
 
 
-(defn message-matched-users
-  [user1 user2]
-  true)
+;;; Messaging Logic
+;;;;;;;;;;;;;;;;;;;
 
-(spec/fdef message-matched-users
-  :args (spec/cat :user1 ::user/user :user2 ::user/user)
+
+(def matched-message
+  "Hello! This week you have been matched up as conversation partners! I hope you meet up and have a great time :)")
+
+(def unmatched-message
+  "Sorry! :( This week you haven't been matched with anyone. Better luck next week!")
+
+
+(defn message-unmatched-user
+  [bot-id user message]
+  (::mattermost/success (mattermost/message-user bot-id user message)))
+
+(spec/fdef message-unmatched-user
+  :args (spec/cat :bot ::user/user :user ::user/user)
   :ret boolean?)
+
+
+;;; Entrypoint
+;;;;;;;;;;;;;;
+
+(defn run
+  [host token team channel dry-run]
+  (let [bot-info (mattermost/get-my-info)
+        channel-id (mattermost/channel-id-by-team-name-and-channel-name team
+                                                                        channel)
+        users (mattermost/active-users-by-channel-id channel-id)
+        {:keys [::matched-pairs ::unmatched-user]
+         :as result} (match-users users)]
+    (if dry-run
+      (do
+        (println (json/generate-string
+                  result {:pretty true}))
+        result))))
+
 
 
 
@@ -99,5 +131,5 @@
   ;; => true
 
 
-
+  
   ) ;; Comment ends here

@@ -6,11 +6,11 @@
 
             [clj-http.client :as http]
 
+            [robot-disco.robonona.mattermost :as SUT]
+
             [robot-disco.robonona.mattermost.json :as-alias json]
             [robot-disco.robonona.mattermost.user :as-alias user]
-            [robot-disco.robonona.mattermost.channel :as-alias channel]
-            
-            [robot-disco.robonona.mattermost :as SUT]))
+            [robot-disco.robonona.mattermost.channel :as-alias channel]))
 
 
 ;;; Functions to instrument
@@ -20,7 +20,10 @@
 (def ^:private tests-to-instrument
   `[SUT/active-users-by-channel-id
     SUT/json-user->user
-    SUT/channel-id-by-team-name-and-channel-name])
+    SUT/channel-id-by-team-name-and-channel-name
+    SUT/message-users
+    SUT/message-user
+    SUT/get-my-id])
 
 
 (defn instrumentation-fixture [f]
@@ -107,13 +110,13 @@
         (is (true? (::SUT/success result)))))))
 
 
-(deftest get-my-id
+(deftest get-my-info
   (let [fake-response {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}]
     (with-redefs [http/get (fn [_ _]
                              {:status 200
                               :body fake-response})]
-      (let [result (SUT/get-my-id)]
-        (is (= result (:id fake-response)))))))
+      (let [result (SUT/get-my-info)]
+        (is (= (::user/id result) (:id fake-response)))))))
 
 
 ;;; Generative testing
