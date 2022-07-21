@@ -151,7 +151,7 @@
           query-params {"page" page
                         "per_page" max-items-per-page
                         "active" true
-                        "in-channel" channel-id}
+                        "in_channel" channel-id}
           response (:body (http/get url
                                     {:query-params query-params
                                      :headers {"Authorization" (str "Bearer "
