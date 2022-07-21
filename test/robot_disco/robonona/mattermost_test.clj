@@ -55,9 +55,7 @@
   (testing "Happy path"
     ;; This is how we mock/fake things simply
     (with-redefs [http/get (fn [_ _] {:body fake-response})]
-      (let [result (SUT/active-users-by-channel-id fake-host
-                                                   fake-token
-                                                   fake-channel-id)]
+      (let [result (SUT/active-users-by-channel-id fake-channel-id)]
         (is (spec/valid? (spec/coll-of ::user/user) result))))))
 
 
@@ -66,8 +64,6 @@
     ;; This is how we mock/fake things simply
     (with-redefs [http/get (fn [_ _] {:body {:id fake-channel-id}})]
       (let [result (SUT/channel-id-by-team-name-and-channel-name
-                    fake-host
-                    fake-token
                     fake-team-name
                     fake-channel-name)]
         (is (spec/valid? ::channel/id result))))))
@@ -93,11 +89,10 @@
     (with-redefs [http/post (fn [_ _]
                               {:status 201
                                :body {:id "Hp685SU5xpJ928wkx8yulq1QsGk"}})]
-      (let [users '({:id "5qwdq6", :username "34EUwgaR"}
-                    {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"})
+      (let [users '(#::user{:id "5qwdq6", :username "34EUwgaR"}
+                    #::user{:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"})
             fake-message "hello"
-            result (SUT/message-users fake-host fake-token users
-                                      fake-message)]
+            result (SUT/message-users users fake-message)]
         (is (true? (::SUT/success result)))))))
 
 (deftest message-user
@@ -105,14 +100,10 @@
     (with-redefs [http/post (fn [_ _]
                               {:status 201
                                :body {:id "Hp685SU5xpJ928wkx8yulq1QsGk"}})]
-      (let [me {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}
-            user {:id "5qwdq6", :username "34EUwgaR"}
+      (let [me #::user{:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}
+            user #::user{:id "5qwdq6", :username "34EUwgaR"}
             fake-message "hello"
-            result (SUT/message-user fake-host
-                                     fake-token
-                                     me
-                                     user
-                                     fake-message)]
+            result (SUT/message-user me user fake-message)]
         (is (true? (::SUT/success result)))))))
 
 
@@ -121,7 +112,7 @@
     (with-redefs [http/get (fn [_ _]
                              {:status 200
                               :body fake-response})]
-      (let [result (SUT/get-my-id fake-host fake-token)]
+      (let [result (SUT/get-my-id)]
         (is (= result (:id fake-response)))))))
 
 

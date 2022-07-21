@@ -37,6 +37,39 @@
                                   :opt [::reason]))
 
 
+;;; API Context
+;;;;;;;;;;;;;;;
+;;; Mattermost host and Auth Tokens don't usually get changed after being set, so let's
+;;; put them in a context so we don't have to pass them as arguments all the time.
+;;;
+;;; This code was inspired by and/or lifted from
+;;; [[mattermost-clj][https://github.com/devth/mattermost-clj]]
+
+(spec/def ::base-url string?)
+(spec/def ::auth-token string?)
+(spec/def ::api-context (spec/keys :req [::base-url ::auth-token]))
+
+(def default-api-context
+  "Default API context."
+  {:base-url "https://your-mattermost-url.com/api/v4"
+   :auth-token "please_set_me"})
+
+
+(def ^:dynamic *api-context*
+  "Dynamic API context to be applied in  API calls."
+  default-api-context)
+
+
+(defn set-api-context
+  "Set the *api-context* globally"
+  [new-context]
+  (alter-var-root #'*api-context* (constantly
+                                   (merge *api-context* new-context))))
+
+(spec/fdef set-api-context
+  :args (spec/cat :context ::api-context))
+
+
 ;;; Generic Mattermost HTTP request logic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -82,23 +115,20 @@
 
 
 (defn channel-id-by-team-name-and-channel-name
-  [host token team-name channel-name]
-  (let [url (str "https://"
-                 host
-                 "/api/v4"
+  [team-name channel-name]
+  (let [url (str (::base-url *api-context*)
                  "/teams/name/"
                  team-name
                  "/channels/name/"
                  channel-name)
         result (http/get url
-                         {:headers {"Authorization" (str "Bearer " token)}
+                         {:headers {"Authorization"
+                                    (str "Bearer " (::auth-token *api-context*))}
                           :as :json})]
     (-> result :body :id)))
 
 (spec/fdef channel-id-by-team-name-and-channel-name
-  :args (spec/cat :host string?
-                  :token string?
-                  :team-name ::team/name
+  :args (spec/cat :team-name ::team/name
                   :channel-name ::channel/name)
   :ret ::channel/id)
 
@@ -114,10 +144,10 @@
   [[Thread/sleep]] between each page to ensure we don't slam the server. We also
   will return at most `request-page-limit` pages' worth of data so that we don't
   freeze on channels with ludicriously large numbers of users in them."
-  [host token channel-id]
+  [channel-id]
   (loop [results []
          page 0]
-    (let [url (str "https://" host "/api/v4" "/users")
+    (let [url (str (::base-url *api-context*) "/users")
           query-params {"page" page
                         "per_page" max-items-per-page
                         "active" true
@@ -125,7 +155,7 @@
           response (:body (http/get url
                                     {:query-params query-params
                                      :headers {"Authorization" (str "Bearer "
-                                                                    token)}
+                                                                    (::auth-token *api-context*))}
                                      :as :json}))
           processed (map json-user->user response)
           accumulated-results (into results processed)
@@ -143,7 +173,7 @@
         accumulated-results))))
 
 (spec/fdef active-users-by-channel-id
-  :args (spec/cat :host string? :token string? :channel-id string?)
+  :args (spec/cat :channel-id string?)
   :ret ::user/users)
 
 
@@ -152,13 +182,12 @@
 
   Note: This will create a group chat with all the specified users as well as
   the account representing this program in mattermost."
-  [host token users message]
-  (let [response (http/post (str "https://"
-                                 host
-                                 "/api/v4"
+  [users message]
+  (let [response (http/post (str (::base-url *api-context*)
                                  "/channels/group")
                             {:headers
-                             {"Authorization" (str "Bearer " token)}
+                             {"Authorization" (str "Bearer "
+                                                   (::auth-token *api-context*))}
                              :body (json/generate-string (map ::user/id users))
                              :content-type :json
                              :as :json})
@@ -168,12 +197,11 @@
       (not (= 201 status)) {::success false ::reason status}
       (not channel-id) {::success false ::reason :channel-id-missing}
       :else
-      (let [response (http/post (str "https://"
-                                     host
-                                     "/api/v4"
+      (let [response (http/post (str (::base-url *api-context*)
                                      "/posts")
                                 {:headers
-                                 {"Authorization" (str "Bearer " token)}
+                                 {"Authorization" (str "Bearer "
+                                                       (::auth-token *api-context*))}
                                  :content-type :json
                                  :body (json/generate-string
                                         {"channel_id" channel-id
@@ -184,22 +212,21 @@
           {::success false ::reason status})))))
 
 (spec/fdef message-users
-  :args (spec/cat :host string? :token string? :users ::user/users :message string?)
+  :args (spec/cat :users ::user/users :message string?)
   :ret ::api-result)
 
 
 (defn message-user
-  "As `me`, Message `user` with the provided `message`."
-  [host token me user message]
-  (let [response (http/post (str "https://"
-                                 host
-                                 "/api/v4"
+  "As `user1`, Message `user2` with the provided `message`."
+  [user1 user2 message]
+  (let [response (http/post (str (::base-url *api-context*)
                                  "/channels/direct")
                             {:headers
-                             {"Authorization" (str "Bearer " token)}
+                             {"Authorization" (str "Bearer "
+                                                   (::auth-token *api-context*))}
                              :body (json/generate-string
-                                    [(::user/id me)
-                                     (::user/id user)])
+                                    [(::user/id user1)
+                                     (::user/id user2)])
                              :content-type :json
                              :as :json})
         status (:status response)
@@ -208,12 +235,11 @@
       (not (= 201 status)) {::success false ::reason status}
       (not channel-id) {::success false ::reason :channel-id-missing}
       :else
-      (let [response (http/post (str "https://"
-                                     host
-                                     "/api/v4"
+      (let [response (http/post (str (::base-url *api-context*)
                                      "/posts")
                                 {:headers
-                                 {"Authorization" (str "Bearer " token)}
+                                 {"Authorization" (str "Bearer "
+                                                       (::auth-token *api-context*))}
                                  :content-type :json
                                  :body (json/generate-string {"channel_id" channel-id
                                                               "message" message})})
@@ -223,24 +249,26 @@
           {::success false ::reason status})))))
 
 (spec/fdef message-user
-  :args (spec/cat :host string?
-                  :token string?
-                  :me ::user/user
-                  :user ::user/user
+  :args (spec/cat :user1 ::user/user
+                  :user2 ::user/user
                   :message string?)
   :ret ::api-result)
 
 
 (defn get-my-id
-  [host token]
-  (let [url (str "https://"
-                 host
-                 "/api/v4"
+  "Get user id associated with session token."
+  []
+  (let [url (str (::base-url *api-context*)
                  "/users/me")
         result (http/get url
-                         {:headers {"Authorization" (str "Bearer " token)}
+                         {:headers {"Authorization" (str "Bearer "
+                                                         (::auth-token *api-context*))}
                           :as :json})]
     (-> result :body :id)))
+
+(spec/fdef get-my-id
+  :args (spec/cat)
+  :ret ::user/id)
 
 ;;; Scratchpad
 ;;;;;;;;;;;;;;
