@@ -51,30 +51,53 @@
 
 
 (defn message-unmatched-user
-  [bot-id user message]
-  (::mattermost/success (mattermost/message-user bot-id user message)))
+  "As `bot`, send `message` to `user`"
+  [bot user message]
+  (::mattermost/success (mattermost/message-user bot user message)))
 
 (spec/fdef message-unmatched-user
-  :args (spec/cat :bot ::user/user :user ::user/user)
+  :args (spec/cat :bot ::user/user :user ::user/user :message string?)
   :ret boolean?)
+
+
+(defn message-matched-pair
+  [bot pair message]
+  (::mattermost/success (mattermost/message-users (conj pair bot) message)))
+
+(spec/fdef message-matched-pair
+  :args (spec/cat :bot ::mattermost/user :pair ::matched-pair :message string?)
+  :ret boolean?)
+
 
 
 ;;; Entrypoint
 ;;;;;;;;;;;;;;
 
 (defn run
-  [host token team channel dry-run]
-  (let [bot-info (mattermost/get-my-info)
+  "Do the needful."
+  [host token team channel & {:keys [dry-run] :or {dry-run false}}]
+  (let [_ (mattermost/set-api-context {
+                                       ::mattermost/base-url (str "https://" host "/api/v4")
+                                       ::mattermost/auth-token token})
+        bot-info (mattermost/get-my-info)
         channel-id (mattermost/channel-id-by-team-name-and-channel-name team
                                                                         channel)
         users (mattermost/active-users-by-channel-id channel-id)
-        {:keys [::matched-pairs ::unmatched-user]
+        {::keys [matched-pairs unmatched-user]
          :as result} (match-users users)]
-    (if dry-run
-      (do
-        (println (json/generate-string
-                  result {:pretty true}))
-        result))))
+    (println (java.util.Date.))
+    (println (json/generate-string
+              result {:pretty false}))
+    (println unmatched-user)
+    (when (not dry-run)
+      (message-unmatched-user bot-info
+                              unmatched-user
+                              unmatched-message)
+      (doseq [pair matched-pairs]
+        (message-matched-pair bot-info
+                              pair
+                              matched-message)))
+    result))
 
 
 
@@ -122,14 +145,17 @@
 
 (comment
 
-  (spec/valid? ::mattermost-user {:id "34ib5j6khbfjebfjgb356hjdhg"
-                                  :username "gaelan.dcosta"})
-  ;; => true
-
-  (spec/valid? ::user {::user-id "34ib5j6khbfjebfjgb356hjdhg"
-                       ::username "gaelan.dcosta"})
-  ;; => true
+  (mattermost/set-api-context {
+                               ::mattermost/base-url "https://mattermost.internal.tulip.io/api/v4"
+                               ::mattermost/auth-token (System/getenv "ROBONONA_MATTERMOST_TOKEN")})
 
 
-  
-  ) ;; Comment ends here
+  (run "mattermost.internal.tulip.io"
+    (System/getenv "ROBONONA_MATTERMOST_TOKEN")
+    "general"
+    "the-real-coffeebot-dev"
+    :dry-run true)
+
+
+
+  )  ;; Comment ends here

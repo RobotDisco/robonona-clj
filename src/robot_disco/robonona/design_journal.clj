@@ -856,7 +856,7 @@
   ;;
   ;; While that is true, emacs' syntax checking can't handle it. Sad.
 
-  ;; clj-user doesn't auto-coerce input into json. It will coerce output with
+  ;; clj-http doesn't auto-coerce input into json. It will coerce output with
   ;; the `:as` keyword.
 
   ) ;; Comment ends here
@@ -870,3 +870,54 @@
 
   ;;; I can fetch it via `/api/v4/users/me` and my token so it's not too hard
   ;;; to get.
+
+
+
+  ) ;; Comment ends here
+
+(comment
+  ;;; 2022-07-21 Putting it all together
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;;; My run function looks really nice with everything split out
+
+  ;;; Bots need to be explicitly invited into teams and channels. I didn't
+  ;;; win anything there.
+
+  ;;; I don't have to log into anything. I can just use my bearer key for my
+  ;;; purposes.
+
+  ;;; keywords have to be namespaced when using destructing inside maps.
+  ;;; e.g. `{::user/keys [id username]}`
+
+  ;;; Woah you can use a map directly after the optional rest indicator to enable
+  ;;; keyword arguments!
+
+
+
+  ) ;; Comments end here
+
+(comment
+  ;;; 2022-07-21 TODO Future Ideas
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; I still think there's too much coupling between business logic and
+  ;; mattermost logic. There should probably be a main function, that references
+  ;; both modules, that configures mattermost functionality and then runs the
+  ;; business logic.
+
+  ;; Additionally, I dislike how the business logic calls mattermost
+  ;; functionality, even if it is split into two different modules. It should be
+  ;; more split; the business logic should know _nothing_ about mattermost.
+  ;;
+  ;; Can I do this by emitting messages for a mattermost module that then
+  ;; actually does the call. Would that be event dispatching? Do I need a third
+  ;; module?
+
+  ;; I also need to make sure I remove the bot from consideration in matches.
+  ;; Unfortunately because of how I get active users, it is included in the
+  ;; fetch call.
+
+
+
+  )  ;; Comment ends here.

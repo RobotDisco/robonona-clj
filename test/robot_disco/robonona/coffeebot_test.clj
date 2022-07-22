@@ -14,7 +14,8 @@
 
 (def ^:private tests-to-instrument
   `[SUT/match-users
-    SUT/message-matched-pairs])
+    SUT/message-matched-pairs
+    SUT/message-unmatched-user])
 
 
 (defn instrumentation-fixture [f]
@@ -73,6 +74,18 @@
             user #::user{:id "55", :username "6HS"}
             result (SUT/message-unmatched-user bot user "hello")]
         (is (true? result))))))
+
+
+(deftest message-matched-pair
+  (testing "happy path"
+    (with-redefs [http/post (fn [_ _] {:status 201 :body {:id "aaa"}})]
+      (let [bot #::user{:username "whocares" :id "fakeid"}
+            pair [#::user{:id "55", :username "6HS"}
+                  #::user{:id "9Rz81", :username "OU5YBKo"}]
+            fake-message "hello"
+            result (SUT/message-matched-pair bot pair fake-message)]
+        (is (true? result))))))
+
 
 
 (comment
