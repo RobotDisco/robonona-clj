@@ -4,7 +4,6 @@
             [clj-http.client :as http]
             [cheshire.core :as json]
             [robot-disco.robonona.mattermost.user :as-alias user]
-            [robot-disco.robonona.mattermost.json :as-alias json-user]
             [robot-disco.robonona.mattermost.channel :as-alias channel]
             [robot-disco.robonona.mattermost.team :as-alias team]))
 
@@ -24,7 +23,7 @@
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
 (spec/def ::user/users (spec/coll-of ::user/user))
 
-(spec/def ::json-user/user (spec/keys :req-un [::user/id ::user/username]))
+(spec/def ::user/json-user (spec/keys :req-un [::user/id ::user/username]))
 
 
 ;;; Mattermost API results
@@ -102,7 +101,7 @@
                             :username ::user/username}))
 
 (spec/fdef json-user->user
-  :args (spec/cat :mm-user ::json-user/user)
+  :args (spec/cat :mm-user ::user/json-user)
   :ret ::user/user
   :fn #(let [input (-> % :args :mm-user)
              output (-> % :ret)]

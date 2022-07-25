@@ -8,7 +8,6 @@
 
             [robot-disco.robonona.mattermost :as SUT]
 
-            [robot-disco.robonona.mattermost.json :as-alias json]
             [robot-disco.robonona.mattermost.user :as-alias user]
             [robot-disco.robonona.mattermost.channel :as-alias channel]))
 
@@ -72,7 +71,7 @@
         (is (spec/valid? ::channel/id result))))))
 
 
-(def json-user-mock (spec-gen/generate (spec/gen ::json/user)))
+(def json-user-mock (spec-gen/generate (spec/gen ::user/json-user)))
 
 (deftest json-user->user
   (let [result (SUT/json-user->user json-user-mock)]
