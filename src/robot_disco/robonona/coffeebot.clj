@@ -150,7 +150,7 @@
   (run "mattermost.internal.tulip.io"
     (System/getenv "ROBONONA_MATTERMOST_TOKEN")
     "general"
-    "the-real-coffeebot-dev"
+    "coffeebot-dev"
     :dry-run true)
 
 
