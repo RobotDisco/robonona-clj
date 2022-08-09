@@ -85,14 +85,11 @@
         users (mattermost/active-users-by-channel-id channel-id)
         {::keys [matched-pairs unmatched-user]
          :as result} (match-users users)]
-    (println (java.util.Date.))
-    (println (json/generate-string
-              result {:pretty false}))
-    (println unmatched-user)
     (when (not dry-run)
-      (message-unmatched-user bot-info
-                              unmatched-user
-                              unmatched-message)
+      (when unmatched-user
+        (message-unmatched-user bot-info
+                                unmatched-user
+                                unmatched-message))
       (doseq [pair matched-pairs]
         (message-matched-pair bot-info
                               pair
