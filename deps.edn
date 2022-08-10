@@ -13,4 +13,5 @@
                           {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
              :exec-fn cognitect.test-runner.api/test
              :extra-paths ["test"]
-             :main-opts ["-m" "cognitect.test-runner"]}}}
+             :main-opts ["-m" "cognitect.test-runner"]}
+  :env/dev {:extra-paths ["dev"]}}}

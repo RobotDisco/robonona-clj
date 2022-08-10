@@ -940,3 +940,20 @@
 
 
   )  ;; Comment ends here.
+
+(comment
+  ;;;; 2022-08-09 Creating dev helpers
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; There are a bunch of things I do all the time, like mark functions to
+  ;; instrument, or run the "end-to-end" coffeebot functionality. There's a
+  ;; pattern for setting these up as helper functions (as well as pre-loading
+  ;; the namespaces I most engge with) where we do this in a `dev/user.clj`
+  ;; that is only loaded with a special alias.
+
+  ;; Practiclli's basic guide on this is at https://practical.li/clojure-staging/clojure-tools/projects/configure-repl-startup.html
+  ;; The Clojure website itself goes into more depth, and even suggests eventual
+  ;; third-party industrial-strength tooling: https://clojure.org/guides/repl/introduction
+
+
+  )  ;; Comment ends here.
