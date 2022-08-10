@@ -921,3 +921,22 @@
 
 
   )  ;; Comment ends here.
+
+(comment
+  ;;;; 2022-08-09 Bot shouldn't match itself
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Realized that currently the bot could match users with itself. Disallowed
+  ;; that.
+
+  ;; My tests don't explicitly handle the assumptions I made when implementing
+  ;; this, so I had to rely on manual "integration" tests. Is this a sign I need
+  ;; to write an integration test that legit relies on mattermost? Maybe. I
+  ;; don't know how I can cover that test entirely via faked payloads.
+
+  ;; Also my tests don't instrument enough of the code, not enough spec tests
+  ;; are being checked. Also, how do I set up a dev env where all my functions
+  ;; are specc'd in a dev env?
+
+
+  )  ;; Comment ends here.

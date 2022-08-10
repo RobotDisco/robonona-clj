@@ -273,5 +273,9 @@
 ;;;;;;;;;;;;;;
 (comment
 
-  (require '[clojure.spec.gen.alpha :as spec-gen])) ;; Comment ends here
+  (require '[clojure.spec.gen.alpha :as spec-gen])
+
+  (get-my-info)
+
+  ) ;; Comment ends here
 

@@ -22,7 +22,7 @@
     SUT/channel-id-by-team-name-and-channel-name
     SUT/message-users
     SUT/message-user
-    SUT/get-my-id])
+    SUT/get-my-info])
 
 
 (defn instrumentation-fixture [f]

@@ -1,5 +1,6 @@
 (ns robot-disco.robonona.coffeebot
   (:require [clojure.spec.alpha :as spec]
+            [clojure.set :as set]
             [cheshire.core :as json]
             [robot-disco.robonona.mattermost :as mattermost]
             [robot-disco.robonona.mattermost.user :as-alias user]))
@@ -17,10 +18,16 @@
 ;;; Pairing Logic
 ;;;;;;;;;;;;;;;;;
 
+(defn- remove-ignored-users
+  [users ignore]
+  (let [ignore-ids (into #{} (map ::user/id ignore))]
+    (remove #(ignore-ids (::user/id %)) users)))
+
 (defn match-users
   "Group users into pairs. If odd number of users, return unmatched user."
-  [users]
-  (let [shuffled (shuffle (map #(select-keys % [::user/id ::user/username]) users))]
+  [users ignore-users]
+  (let [nonignored (remove-ignored-users users ignore-users)
+        shuffled (shuffle (map #(select-keys % [::user/id ::user/username]) nonignored))]
     (if (even? (count shuffled))
       ;; For some reason we need vectors here to conform to `spec/tuple`
       {::matched-pairs (map vec (partition 2 shuffled))}
@@ -28,15 +35,22 @@
        ::unmatched-user (first shuffled)})))
 
 (spec/fdef match-users
-  :args (spec/cat :users (spec/coll-of ::user/user))
+  :args (spec/cat :users (spec/coll-of ::user/user)
+                  :ignore-users (spec/coll-of ::user/user))
   :ret ::matches
-  ;; Length of pairs should be approximately half the length of candidate users
+  ;; No ignored users should be matched or messaged
   ;; We should only get an unmatched user if the input list has an odd length.
-  :fn (spec/and #(= (quot (count (-> % :args :users)) 2)
-               (count (-> % :ret ::matched-pairs)))
-            #(if (even? (count (-> % :args :users)))
-              (not (contains? (:ret  %) ::unmatched-user))
-              (contains? (:ret %) ::unmatched-user))))
+  :fn (spec/and
+       #(let [processed-users (conj (flatten (-> % :ret ::matched-pairs))
+                                    (-> % :ret ::unmatched-user))
+              ignored-users (-> % :args ::ignore-users)]
+          (empty? (set/intersection (set processed-users)
+                                    (set ignored-users))))
+       #(let [processed (remove-ignored-users (-> % :args :users)
+                                              (-> % :args :ignore-users))]
+          (if (even? (count processed))
+            (not (contains? (:ret %) ::unmatched-user))
+            (contains? (:ret %) ::unmatched-user)))))
 
 
 ;;; Messaging Logic
@@ -65,7 +79,7 @@
   (::mattermost/success (mattermost/message-users (conj pair bot) message)))
 
 (spec/fdef message-matched-pair
-  :args (spec/cat :bot ::mattermost/user :pair ::matched-pair :message string?)
+  :args (spec/cat :bot ::user/user :pair ::matched-pair :message string?)
   :ret boolean?)
 
 
@@ -84,7 +98,7 @@
                                                                         channel)
         users (mattermost/active-users-by-channel-id channel-id)
         {::keys [matched-pairs unmatched-user]
-         :as result} (match-users users)]
+         :as result} (match-users users [bot-info])]
     (when (not dry-run)
       (when unmatched-user
         (message-unmatched-user bot-info

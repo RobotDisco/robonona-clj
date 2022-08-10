@@ -30,10 +30,30 @@
 ;; Mock data
 ;;;;;;;;;;;;
 
+(def ignored-user
+  #:robot-disco.robonona.mattermost.user
+  {:id "ignoreme"
+   :username "ignoreme@test.com"})
+
 (def mock-user
   #:robot-disco.robonona.mattermost.user
   {:id "aaa"
    :username "a@test.com"})
+
+(def mock-user1
+  #:robot-disco.robonona.mattermost.user
+  {:id "aaa"
+   :username "a@test.com"})
+
+(def mock-user2
+  #:robot-disco.robonona.mattermost.user
+  {:id "bbb"
+   :username "b@test.com"})
+
+(def mock-user3
+  #:robot-disco.robonona.mattermost.user
+  {:id "ccc"
+   :username "c@test.com"})
 
 (def even-mock-user-list
   [mock-user mock-user])
@@ -49,17 +69,29 @@
 
 (deftest match-users
   (testing "even number of users"
-    (let [users even-mock-user-list
-          result (SUT/match-users even-mock-user-list)]
+    (let [users [mock-user1 mock-user2]
+          result (SUT/match-users users [])]
       (is (= (count (::SUT/matched-pairs result)) (/ (count users) 2)))
       (is (not (contains? result ::SUT/unmatched-user)))
       (is (spec/valid? ::SUT/matches result))))
   (testing "odd number of users"
-    (let [users odd-mock-user-list
-          result (SUT/match-users users)]
+    (let [users [mock-user1 mock-user2 mock-user3]
+          result (SUT/match-users users [])]
       (is (= (count (::SUT/matched-pairs result)) (/ (dec (count users)) 2)))
       (is (contains? result ::SUT/unmatched-user))
-      (is (spec/valid? ::SUT/matches result)))))
+      (is (spec/valid? ::SUT/matches result))))
+  (testing "ignored users are not matched"
+    (let [ignored [ignored-user]
+          users [mock-user1 mock-user2 mock-user3 ignored-user]
+          result (SUT/match-users users ignored)
+          matched-users (flatten (::SUT/matched-pairs result))
+          unmatched-user (::SUT/unmatched-user result)]
+      (is (not-any? #(= (-> % first ::user/id)
+                        (-> % second ::user/id))
+                    (for [x1 matched-users
+                          x2 ignored]
+                      [x1 x2])))
+      (is (not-any? #(= (::user/id unmatched-user) (::user/id %)) ignored)))))
 
 (deftest ^:generative match-users-generative
   (is (= 1 (-> (spec-test/check `SUT/match-users)
@@ -110,5 +142,10 @@
   ;;     #:robot-disco.robonona.mattermost.user{:id "9Rz81", :username "OU5YBKo"}
   ;;     #:robot-disco.robonona.mattermost.user{:id "2LHe", :username "i9A8jU7P"}
   ;;     #:robot-disco.robonona.mattermost.user{:id "8q99D", :username "75VmBe"})
+
+  (not-any? #(= ignored-user %) (flatten (::SUT/matched-pairs (SUT/match-users [mock-user1 mock-user2 mock-user3 ignored-user]
+                                                                               [ignored-user]))))
+
+  (spec-test/instrument)
 
   ) ;; Comment ends here
