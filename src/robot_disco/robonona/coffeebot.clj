@@ -84,35 +84,6 @@
 
 
 
-;;; Entrypoint
-;;;;;;;;;;;;;;
-
-(defn run
-  "Do the needful."
-  [host token team channel & {:keys [dry-run] :or {dry-run false}}]
-  (let [_ (mattermost/set-api-context {
-                                       ::mattermost/base-url (str "https://" host "/api/v4")
-                                       ::mattermost/auth-token token})
-        bot-info (mattermost/get-my-info)
-        channel-id (mattermost/channel-id-by-team-name-and-channel-name team
-                                                                        channel)
-        users (mattermost/active-users-by-channel-id channel-id)
-        {::keys [matched-pairs unmatched-user]
-         :as result} (match-users users [bot-info])]
-    (when (not dry-run)
-      (when unmatched-user
-        (message-unmatched-user bot-info
-                                unmatched-user
-                                unmatched-message))
-      (doseq [pair matched-pairs]
-        (message-matched-pair bot-info
-                              pair
-                              matched-message)))
-    result))
-
-
-
-
 ;;; Test data
 ;;;;;;;;;;;;;
 

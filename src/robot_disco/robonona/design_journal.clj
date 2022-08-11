@@ -957,3 +957,20 @@
 
 
   )  ;; Comment ends here.
+
+(comment
+  ;;;; 2022-08-10 Run dry/integration tests from dev helper
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Have to think of different entrypoints for testing
+  ;; dry run and dev integration: Do it in REPL
+  ;; run via commandline
+
+  ;; Only did the REPL functions to start. Using juxt/aero because I don't think
+  ;; we should pass credentials via arguments. But we'll need a main function
+  ;; that can run from the commandline. Possibly dry-run is a valid param?
+  ;; Can I merge juxt/aero with babashka-cli?
+  ;; Can I add more testing here and possibly spec?
+
+
+  )  ;; Comment ends here.
