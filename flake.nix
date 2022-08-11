@@ -30,6 +30,9 @@
       {
         devShells.default = pkgs.devshell.mkShell {
           packages = [
+            pkgs.git
+            pkgs.ripgrep
+            
             pkgs.clojure
             pkgs.clojure-lsp
             pkgs.clj-kondo
