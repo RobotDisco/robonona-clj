@@ -12,7 +12,7 @@
       url = "github:jlesquembre/clj-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
-    
+
   };
   outputs = { self, nixpkgs, flake-utils, devshell, clj-nix }:
 
@@ -20,19 +20,32 @@
       let
         pkgs = import nixpkgs {
           inherit system;
-          overlays = [
-            clj-nix.overlays.default
-            devshell.overlay
-          ];
+          overlays = [ clj-nix.overlays.default devshell.overlay ];
         };
-      in
 
-      {
+        cljpkgs = clj-nix.packages."${system}";
+
+      in {
+
+        packages = rec {
+          robonona = cljpkgs.mkCljBin {
+            projectSrc = ./.;
+            name = "robot-disco/robonona";
+            main-ns = "robot-disco.robonona.main";
+
+            doCheck = true;
+            checkPhase = "clj -M:env/test";
+          };
+          default = robonona;
+        };
+
         devShells.default = pkgs.devshell.mkShell {
           packages = [
             pkgs.git
             pkgs.ripgrep
-            
+
+            pkgs.nixfmt
+
             pkgs.clojure
             pkgs.clojure-lsp
             pkgs.clj-kondo
@@ -45,8 +58,14 @@
                 nix run github:jlesquembre/clj-nix#deps-lock
               '';
             }
+            {
+              name = "run-tests";
+              help = "Test project";
+              command = ''
+                clj -M:env/test
+              '';
+            }
           ];
         };
       });
-
 }
