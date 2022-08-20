@@ -2,4 +2,9 @@
         mattermost-clj {:mvn/version "4.0.3"}}
  :paths ["src"]
  :aliases
- {:env/test {:extra-paths ["test"]}}
+ {:env/test {:extra-deps {;; Test Runner
+                          io.github.cognitect-labs/test-runner
+                          {:git/tag "v0.5.1" :git/sha "dfb30dd"}}
+             :exec-fn cognitect.test-runner.api/test
+             :extra-paths ["test"]
+             :main-opts ["-m" "cognitect.test-runner"]}}}

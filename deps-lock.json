@@ -8,6 +8,14 @@
       "tag": "v0.8.2",
       "git-dir": "https/github.com/clojure/tools.build",
       "hash": "sha256-p8kdg9UmpUq+JeyxL+g5R0GwdcP7cOI6wZuJnXK9Y8I="
+    },
+    {
+      "lib": "io.github.cognitect-labs/test-runner",
+      "url": "https://github.com/cognitect-labs/test-runner.git",
+      "rev": "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73",
+      "tag": "v0.5.1",
+      "git-dir": "https/github.com/cognitect-labs/test-runner",
+      "hash": "sha256-PUNd+dHJNPTKno59YI27wpehyULYPvSyCQDjVIadKJ4="
     }
   ],
   "mvn-deps": [
