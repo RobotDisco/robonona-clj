@@ -974,3 +974,25 @@
 
 
   )  ;; Comment ends here.
+
+(comment
+  ;;;; 2022-08-19 Run as a `clj` command
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; `clj -M` leverages a -main function in a compiled function.
+  ;; This will use positional or a string argument that needs to be parsed.
+  ;; `clj -X` can use an arbitrary function with a map for arguments
+  ;; `clj -T` is used to run a tool that doesn't need our project's classpath.
+
+  ;; It feels like Cognitect prefers -X because it doesn't require parsing
+  ;; args or compiling.
+  ;; I feel like I will wind up using -M because clj-nix' derivations leverage
+  ;; it. Also if I want a ahead-of-time-compiled binary I need to use it I
+  ;; think? Maybe just because of `clj-nix`
+
+  ;; `juxt/aero` really wants a single config file containing my environment
+  ;; values. I think this means that it isn't great for allowing others to use
+  ;; this without a lot of complex config merging. Maybe not a problem for now.
+
+
+  )  ;; Comment ends here.

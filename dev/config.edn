@@ -1,8 +1,0 @@
-{:secrets #include #join [#env HOME "/.secrets.edn"]
- :mattermost {:host "mattermost.internal.tulip.io"
-              :team "general"
-              :token #ref [:secrets :robonona-token]}
- :coffeebot {:channel #profile {:default "coffeebot-everywhere"
-                                :dev "coffeebot-dev"}
-             :dry-run #profile {:default false
-                                :dev true}}}

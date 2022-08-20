@@ -2,7 +2,7 @@
         aero/aero {:mvn/version "1.1.6"}
         clj-http/clj-http {:mvn/version "3.6.0"}
         cheshire/cheshire {:mvn/version "5.11.0"}}
- :paths ["src"]
+ :paths ["resources" "src"]
  :aliases
  {:env/test {:extra-deps {;; Property-based test generators
                           org.clojure/test.check {:mvn/version "1.1.1"}
@@ -14,4 +14,6 @@
              :exec-fn cognitect.test-runner.api/test
              :extra-paths ["test"]
              :main-opts ["-m" "cognitect.test-runner"]}
-  :env/dev {:extra-paths ["dev"]}}}
+  :env/dev {:extra-paths ["dev"]}
+  :coffeebot/dry {:exec-fn robot-disco.robonona.main/main
+                  :exec-args {:config :dev}}}}

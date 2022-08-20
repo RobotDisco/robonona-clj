@@ -1,8 +1,9 @@
 (ns robot-disco.robonona.config
-  (:require [aero.core :as aero]))
+  (:require [aero.core :as aero]
+            [clojure.java.io :as io]))
 
 (defn config [profile]
-  (aero/read-config "dev/config.edn" {:profile profile}))
+  (aero/read-config (io/resource "config.edn") {:profile profile}))
 
 (defn mattermost-token [config]
   (get-in config [:mattermost :token]))

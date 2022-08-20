@@ -36,6 +36,13 @@
     result))
 
 
+(defn main
+  "entrypoint"
+  [& {:keys [config]}]
+  (println (run (config/config config))))
+
+
+
 (comment
 
   (config/config :dev)
