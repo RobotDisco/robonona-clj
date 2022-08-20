@@ -1,7 +1,8 @@
 (ns robot-disco.robonona.main
   (:require [robot-disco.robonona.coffeebot :as coffeebot]
             [robot-disco.robonona.config :as config]
-            [robot-disco.robonona.mattermost :as mattermost]))
+            [robot-disco.robonona.mattermost :as mattermost])
+  (:gen-class))
 
 
 ;;; Entrypoint
@@ -36,10 +37,9 @@
     result))
 
 
-(defn main
-  "entrypoint"
-  [& {:keys [config]}]
-  (println (run (config/config config))))
+(defn -main
+  [profile & _]
+  (println (run (config/config (keyword profile)))))
 
 
 

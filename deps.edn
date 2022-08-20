@@ -15,5 +15,4 @@
              :extra-paths ["test"]
              :main-opts ["-m" "cognitect.test-runner"]}
   :env/dev {:extra-paths ["dev"]}
-  :coffeebot/dry {:exec-fn robot-disco.robonona.main/main
-                  :exec-args {:config :dev}}}}
+  :coffeebot/dry {:main-opts ["-m" "robot-disco.robonona.main"]}}}

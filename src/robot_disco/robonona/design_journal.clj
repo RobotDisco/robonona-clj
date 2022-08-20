@@ -980,7 +980,7 @@
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
   ;; `clj -M` leverages a -main function in a compiled function.
-  ;; This will use positional or a string argument that needs to be parsed.
+  ;; This uses positional string arguments that needs to be parsed explicitly
   ;; `clj -X` can use an arbitrary function with a map for arguments
   ;; `clj -T` is used to run a tool that doesn't need our project's classpath.
 
@@ -993,6 +993,20 @@
   ;; `juxt/aero` really wants a single config file containing my environment
   ;; values. I think this means that it isn't great for allowing others to use
   ;; this without a lot of complex config merging. Maybe not a problem for now.
+
+
+  )  ;; Comment ends here.
+
+(comment
+  ;;;; 2022-08-19 Convert to use -M form
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; For the best as I want to compile this into an uberjar for containers
+  ;; anyway.
+
+  ;; Oh if I append my args to the `clj -M:<alias>` invocation they get picked
+  ;; up.
+
 
 
   )  ;; Comment ends here.
