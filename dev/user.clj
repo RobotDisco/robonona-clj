@@ -18,11 +18,22 @@
                          [:coffeebot :dry-run] false)]
     (main/run config)))
 
+(defn coffeebot-prod-dry-run []
+  (let [config (assoc-in (config/config :prod)
+                         [:coffeebot :dry-run] false)]
+    (main/run config)))
+
+(defn coffeebot-prod-run []
+  (let [config (config/config :prod)]
+    (main/run config)))
+
 (comment
 
   (coffeebot-integration-run)
 
   (coffeebot-dry-run)
+
+  (coffeebot-prod-run)
 
   (instrument)
 
