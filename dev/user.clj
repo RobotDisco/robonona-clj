@@ -20,7 +20,7 @@
 
 (defn coffeebot-prod-dry-run []
   (let [config (assoc-in (config/config :prod)
-                         [:coffeebot :dry-run] false)]
+                         [:coffeebot :dry-run] true)]
     (main/run config)))
 
 (defn coffeebot-prod-run []
@@ -32,6 +32,8 @@
   (coffeebot-integration-run)
 
   (coffeebot-dry-run)
+
+  (coffeebot-prod-dry-run)
 
   (coffeebot-prod-run)
 
