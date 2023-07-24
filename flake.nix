@@ -38,6 +38,13 @@
           };
         };
 
+        apps = {
+          default = {
+            type = "app";
+            program = "${(pkgs.lib.attrsets.getAttr system self.packages).default}/bin/robonona";
+          };
+        };
+
         devShells.default = pkgs.devshell.mkShell {
           packages = [
             pkgs.git
