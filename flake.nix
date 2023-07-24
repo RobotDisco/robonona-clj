@@ -27,8 +27,8 @@
 
       in {
 
-        packages = rec {
-          robonona = cljpkgs.mkCljBin {
+        packages = {
+          default = cljpkgs.mkCljBin {
             projectSrc = ./.;
             name = "robot-disco/robonona";
             main-ns = "robot-disco.robonona.main";
@@ -36,7 +36,6 @@
             doCheck = true;
             checkPhase = "clj -M:env/test";
           };
-          default = robonona;
         };
 
         devShells.default = pkgs.devshell.mkShell {
