@@ -3,75 +3,76 @@
 
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
-    flake-utils.url = "github:numtide/flake-utils";
-    devshell = {
-      url = "github:numtide/devshell";
-      inputs.nixpkgs.follows = "nixpkgs";
-    };
     clj-nix = {
       url = "github:jlesquembre/clj-nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
   };
-  outputs = { self, nixpkgs, flake-utils, devshell, clj-nix }:
+  outputs = { self, nixpkgs, clj-nix }:
+    let
+      inherit (nixpkgs) lib;
 
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
+      supportedSystems = [
+        "aarch64-darwin"
+        "x86_64-linux"
+      ];
+      forAllSystems = lib.genAttrs supportedSystems;
+      pkgsFor = forAllSystems (system:
+        import nixpkgs {
           inherit system;
-          overlays = [ clj-nix.overlays.default devshell.overlay ];
-        };
-
-        cljpkgs = clj-nix.packages."${system}";
-
-      in {
-
-        packages = {
-          default = cljpkgs.mkCljBin {
-            projectSrc = ./.;
-            name = "robot-disco/robonona";
-            main-ns = "robot-disco.robonona.main";
-
-            doCheck = true;
-            checkPhase = "clj -M:env/test";
-          };
-        };
-
-        apps = {
-          default = {
-            type = "app";
-            program = "${(pkgs.lib.attrsets.getAttr system self.packages).default}/bin/robonona";
-          };
-        };
-
-        devShells.default = pkgs.devshell.mkShell {
-          packages = [
-            pkgs.git
-            pkgs.ripgrep
-
-            pkgs.nixfmt
-
-            pkgs.clojure
-            pkgs.clojure-lsp
-            pkgs.clj-kondo
+          overlays = [
+            clj-nix.overlays.default
           ];
-          commands = [
-            {
-              name = "update-deps";
-              help = "Update deps-lock.json";
-              command = ''
-                nix run github:jlesquembre/clj-nix#deps-lock
-              '';
-            }
-            {
-              name = "run-tests";
-              help = "Test project";
-              command = ''
-                clj -M:env/test
-              '';
-            }
-          ];
-        };
+        });
+    in {
+      packages = forAllSystems(system: {
+        default = import ./nix/package.nix pkgsFor."${system}";
       });
+
+      nixosModules = {
+        default = import ./nix/module.nix self.packages;
+      };
+
+      apps = forAllSystems (system:
+        let
+          pkgs = pkgsFor."${system}";
+        in
+          {
+            default = {
+              type = "app";
+              program = "${self.packages.${system}.default}/bin/robonona";
+            };
+
+            deps-lock = clj-nix.apps."${system}".deps-lock;
+
+            test = let
+              drv = pkgs.writeShellScriptBin "robonona-test" ''
+                ${pkgs.clojure}/bin/clj -M:env/test
+              '';
+            in
+              {
+                type = "app";
+                program = "${drv}/bin/robonona-test";
+              };
+          });
+
+      devShells.default = forAllSystems (system:
+        let pkgs = pkgsFor."${system}";
+        in {
+          default = pkgs.mkShell {
+            nativeBuildInputs = [
+              pkgs.git
+
+              pkgs.ripgrep
+
+              pkgs.nixfmt
+
+              pkgs.clojure
+              pkgs.clojure-lsp
+              pkgs.clj-kondo
+            ];
+          };
+        });
+    };
 }

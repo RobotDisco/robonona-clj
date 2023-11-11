@@ -1,0 +1,5 @@
+- Add devshell after reading up on how to use it effectively
+- Separate out the code that actually does mattermost code from the code that
+  generates mattermost actions
+- Check BambooHR for people who are out on vacation
+- Add versioning
