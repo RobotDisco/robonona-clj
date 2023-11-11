@@ -2,6 +2,7 @@ packages: { config, lib, pkgs, ... }:
 
 let
   inherit (pkgs) system;
+  inherit (lib) mdDoc;
   cfg = config.services.robonona;
   package = packages."${system}".default;
 in
@@ -21,14 +22,14 @@ in
     user = lib.mkOption {
       default = "root";
       type = lib.types.str;
-      description = mkDoc ''
+      description = mdDoc ''
         Run robonona as this user, which holds the secrets.edn in their home
         directory.
       '';
     };
   };
 
-  config = mkIf (cfg.enable) {
+  config = lib.mkIf (cfg.enable) {
     systemd.timers."robonona" = {
       enable = true;
       wantedBy = [ "timers.target" ];

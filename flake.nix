@@ -57,7 +57,7 @@
               };
           });
 
-      devShells.default = forAllSystems (system:
+      devShells = forAllSystems (system:
         let pkgs = pkgsFor."${system}";
         in {
           default = pkgs.mkShell {
