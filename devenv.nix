@@ -28,13 +28,28 @@
   # services.postgres.enable = true;
 
   # https://devenv.sh/scripts/
-  scripts.hello.exec = ''
-    echo hello from $GREET
-  '';
+  scripts = {
+    deps-tree.exec = "bb deps-tree";
+    format.exec = "bb format";
+    lint.exec = "bb lint";
+  };
+  
 
   enterShell = ''
-    hello
-    git --version
+    echo "Available development commands:"
+    echo "  deps-tree - Show dependencies"
+    echo "  format    - Autoformat code"
+    echo "  lint      - Static Analysis"
+    echo ""
+
+    # Verify required tools
+    ${pkgs.lib.getExe pkgs.git} --version
+
+    ${pkgs.lib.getExe pkgs.babashka} --version
+    ${pkgs.clojure}/bin/clj --version
+
+    ${pkgs.lib.getExe pkgs.cljfmt} --version
+    ${pkgs.lib.getExe pkgs.clj-kondo} --version
   '';
 
   # https://devenv.sh/tasks/
