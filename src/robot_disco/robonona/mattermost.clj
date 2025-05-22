@@ -9,7 +9,6 @@
             [robot-disco.robonona.mattermost.channel :as-alias channel]
             [robot-disco.robonona.mattermost.team :as-alias team]))
 
-
 ;;; Mattermost data specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Data as returned to us from mattermost APIs.
@@ -19,14 +18,12 @@
 (spec/def ::channel/name string?)
 (spec/def ::channel/id string?)
 
-
 (spec/def ::user/id string?)
 (spec/def ::user/username string?)
 (spec/def ::user/user (spec/keys :req [::user/id ::user/username]))
 (spec/def ::user/users (spec/coll-of ::user/user))
 
 (spec/def ::user/json-user (spec/keys :req-un [::user/id ::user/username]))
-
 
 ;;; Mattermost API results
 ;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -36,7 +33,6 @@
 (spec/def ::reason (spec/or :int int? :keyword keyword?))
 (spec/def ::api-result (spec/keys :req [::success]
                                   :opt [::reason]))
-
 
 ;;; API Context
 ;;;;;;;;;;;;;;;
@@ -55,11 +51,9 @@
   {::base-url "https://your-mattermost-url.com/api/v4"
    ::auth-token "please_set_me"})
 
-
 (def ^:dynamic *api-context*
   "Dynamic API context to be applied in  API calls."
   default-api-context)
-
 
 (defn set-api-context
   "Set the *api-context* globally"
@@ -70,10 +64,8 @@
 (spec/fdef set-api-context
   :args (spec/cat :context ::api-context))
 
-
 ;;; Generic Mattermost HTTP request logic
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (def request-page-limit
   "Maximum number of pages to request before returning the call as is.
@@ -89,11 +81,9 @@
   "Number of milliseconds to sleep between page requests."
   1000)
 
-
 ;;; Data conversion
 ;;;;;;;;;;;;;;;;;;;
 ;; Convert JSON shapes to more powerful internal ones
-
 
 (defn json-user->user
   "Convert mattermost's user structure info coffeebot's user structure."
@@ -110,10 +100,8 @@
          (spec/and (= (:id input) (::user/id output))
                    (= (:username input) (::user/username output)))))
 
-
 ;;; Mattermost User calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;
-
 
 (defn channel-id-by-team-name-and-channel-name
   [team-name channel-name]
@@ -132,7 +120,6 @@
   :args (spec/cat :team-name ::team/name
                   :channel-name ::channel/name)
   :ret ::channel/id)
-
 
 (defn active-users-by-channel-id
   "Fetch list of active users from channel with ID `channel-id`.
@@ -177,7 +164,6 @@
   :args (spec/cat :channel-id string?)
   :ret ::user/users)
 
-
 (defn message-users
   "Message the people in `users` with the provided `message`.
 
@@ -215,7 +201,6 @@
 (spec/fdef message-users
   :args (spec/cat :users ::user/users :message string?)
   :ret ::api-result)
-
 
 (defn message-user
   "As `user1`, Message `user2` with the provided `message`."
@@ -255,7 +240,6 @@
                   :message string?)
   :ret ::api-result)
 
-
 (defn get-my-info
   "Get user id associated with session token."
   []
@@ -277,7 +261,5 @@
 
   (require '[clojure.spec.gen.alpha :as spec-gen])
 
-  (get-my-info)
-
-  ) ;; Comment ends here
+  (get-my-info)) ;; Comment ends here
 
