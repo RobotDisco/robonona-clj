@@ -1,4 +1,4 @@
-{ pkgs, lib, config, inputs, ... }:
+{ pkgs, ... }:
 
 {
   # https://devenv.sh/basics/
@@ -8,10 +8,13 @@
   git-hooks.hooks = {
     # Clojure formatting
     cljfmt.enable = true;
+    # Nix formatting
+    deadnix.enable = true;
+    nixfmt-rfc-style.enable = true;
   };
 
   # https://devenv.sh/packages/
-  packages = [ 
+  packages = [
     pkgs.git
     pkgs.babashka
     pkgs.clojure # for testing
@@ -33,7 +36,6 @@
     format.exec = "bb format";
     lint.exec = "bb lint";
   };
-  
 
   enterShell = ''
     echo "Available development commands:"
