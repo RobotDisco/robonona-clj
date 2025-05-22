@@ -1,0 +1,7 @@
+{:paths ["src" "test"]
+ :tasks {deps-tree {:doc "Show dependency tree"
+                    :task (shell "clojure -X:deps tree")}
+         format {:doc "Autoformat code"
+                 :task (shell "cljfmt fix src test")}
+         lint {:doc "Run linter"
+               :task (shell "clj-kondo --lint src test")}}}
