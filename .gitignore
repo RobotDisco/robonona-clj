@@ -1,6 +1,15 @@
-# Ignore everything in this dir but make sure it exists
+# aider for vibecoding
+.aider*
+
+# Devenv.sh dev environment
+.devenv*
+devenv.local.nix
+
+# direnv package environent
 .direnv/*
-!.direnv/.gitkeep
+
+# pre-commit hooks
+.pre-commit-config.yaml
 
 # Ignore nix derivations
 result*
