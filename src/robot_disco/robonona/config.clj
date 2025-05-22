@@ -1,3 +1,5 @@
+;;; SPDX-License-Identifier: EPL-1.0
+
 (ns robot-disco.robonona.config
   (:require [aero.core :as aero]
             [clojure.java.io :as io]))
