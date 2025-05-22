@@ -1,0 +1,2 @@
+- Place a EPLv1.0 SPDX-License-Identifier at the top of every code file.
+- Use conventional commit format in git commit messages
