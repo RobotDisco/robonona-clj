@@ -1,3 +1,5 @@
+;;; SPDX-License-Identifier: EPL-1.0
+
 (ns robot-disco.robonona.coffeebot-test
   (:require
    [clojure.spec.alpha :as spec]

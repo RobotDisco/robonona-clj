@@ -1,3 +1,5 @@
+;;; SPDX-License-Identifier: EPL-1.0
+
 (ns robot-disco.robonona.mattermost-test
   (:require [clojure.spec.alpha :as spec]
             [clojure.spec.gen.alpha :as spec-gen]
