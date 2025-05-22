@@ -6,7 +6,6 @@
             [robot-disco.robonona.mattermost :as mattermost])
   (:gen-class))
 
-
 ;;; Entrypoint
 ;;;;;;;;;;;;;;
 
@@ -18,8 +17,7 @@
         team (config/mattermost-team config)
         channel (config/coffeebot-channel config)
         dry-run (config/coffeebot-dry-run config)
-        _ (mattermost/set-api-context {
-                                       ::mattermost/base-url (str "https://" host "/api/v4")
+        _ (mattermost/set-api-context {::mattermost/base-url (str "https://" host "/api/v4")
                                        ::mattermost/auth-token token})
         bot-info (mattermost/get-my-info)
         channel-id (mattermost/channel-id-by-team-name-and-channel-name team
@@ -30,24 +28,19 @@
     (when (not dry-run)
       (when unmatched-user
         (coffeebot/message-unmatched-user bot-info
-                                unmatched-user
-                                coffeebot/unmatched-message))
+                                          unmatched-user
+                                          coffeebot/unmatched-message))
       (doseq [pair matched-pairs]
         (coffeebot/message-matched-pair bot-info
-                              pair
-                              coffeebot/matched-message)))
+                                        pair
+                                        coffeebot/matched-message)))
     result))
-
 
 (defn -main
   [profile & _]
   (println (run (config/config (keyword profile)))))
 
-
-
 (comment
 
   (config/config :dev)
-  (run)
-
-  )  ;; Comment ends here.
+  (run))  ;; Comment ends here.

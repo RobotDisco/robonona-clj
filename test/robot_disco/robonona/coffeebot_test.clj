@@ -9,7 +9,6 @@
    [robot-disco.robonona.mattermost.user :as-alias user]
    [clj-http.client :as http]))
 
-
 ;;; Functions to instrument
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Turn these on when developing or troubleshooting
@@ -19,43 +18,40 @@
     SUT/message-matched-pairs
     SUT/message-unmatched-user])
 
-
 (defn instrumentation-fixture [f]
   (spec-test/instrument tests-to-instrument)
   (f)
   (spec-test/unstrument tests-to-instrument))
 
-
 (use-fixtures :once instrumentation-fixture)
-
 
 ;; Mock data
 ;;;;;;;;;;;;
 
 (def ignored-user
   #:robot-disco.robonona.mattermost.user
-  {:id "ignoreme"
-   :username "ignoreme@test.com"})
+   {:id "ignoreme"
+    :username "ignoreme@test.com"})
 
 (def mock-user
   #:robot-disco.robonona.mattermost.user
-  {:id "aaa"
-   :username "a@test.com"})
+   {:id "aaa"
+    :username "a@test.com"})
 
 (def mock-user1
   #:robot-disco.robonona.mattermost.user
-  {:id "aaa"
-   :username "a@test.com"})
+   {:id "aaa"
+    :username "a@test.com"})
 
 (def mock-user2
   #:robot-disco.robonona.mattermost.user
-  {:id "bbb"
-   :username "b@test.com"})
+   {:id "bbb"
+    :username "b@test.com"})
 
 (def mock-user3
   #:robot-disco.robonona.mattermost.user
-  {:id "ccc"
-   :username "c@test.com"})
+   {:id "ccc"
+    :username "c@test.com"})
 
 (def even-mock-user-list
   [mock-user mock-user])
@@ -100,7 +96,6 @@
                (spec-test/summarize-results)
                :check-passed))))
 
-
 (deftest message-unmatched-user
   (testing "happy path"
     (with-redefs [http/post (fn [_ _] {:status 201 :body {:id "aaa"}})]
@@ -108,7 +103,6 @@
             user #::user{:id "55", :username "6HS"}
             result (SUT/message-unmatched-user bot user "hello")]
         (is (true? result))))))
-
 
 (deftest message-matched-pair
   (testing "happy path"
@@ -119,8 +113,6 @@
             fake-message "hello"
             result (SUT/message-matched-pair bot pair fake-message)]
         (is (true? result))))))
-
-
 
 (comment
 
@@ -148,6 +140,4 @@
   (not-any? #(= ignored-user %) (flatten (::SUT/matched-pairs (SUT/match-users [mock-user1 mock-user2 mock-user3 ignored-user]
                                                                                [ignored-user]))))
 
-  (spec-test/instrument)
-
-  ) ;; Comment ends here
+  (spec-test/instrument)) ;; Comment ends here

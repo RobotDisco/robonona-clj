@@ -7,7 +7,6 @@
             [robot-disco.robonona.mattermost :as mattermost]
             [robot-disco.robonona.mattermost.user :as-alias user]))
 
-
 ;;; Coffeebot pairing specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (spec/def ::matched-pair (spec/tuple ::user/user ::user/user))
@@ -15,7 +14,6 @@
 (spec/def ::unmatched-user ::user/user)
 (spec/def ::matches (spec/keys :req [::matched-pairs]
                                :opt [::unmatched-user]))
-
 
 ;;; Pairing Logic
 ;;;;;;;;;;;;;;;;;
@@ -54,17 +52,14 @@
             (not (contains? (:ret %) ::unmatched-user))
             (contains? (:ret %) ::unmatched-user)))))
 
-
 ;;; Messaging Logic
 ;;;;;;;;;;;;;;;;;;;
-
 
 (def matched-message
   "Hello! This week you have been matched up as conversation partners! I hope you meet up and have a great time :)")
 
 (def unmatched-message
   "Sorry! :( This week you haven't been matched with anyone. Better luck next week!")
-
 
 (defn message-unmatched-user
   "As `bot`, send `message` to `user`"
@@ -75,7 +70,6 @@
   :args (spec/cat :bot ::user/user :user ::user/user :message string?)
   :ret boolean?)
 
-
 (defn message-matched-pair
   [bot pair message]
   (::mattermost/success (mattermost/message-users (conj pair bot) message)))
@@ -83,8 +77,6 @@
 (spec/fdef message-matched-pair
   :args (spec/cat :bot ::user/user :pair ::matched-pair :message string?)
   :ret boolean?)
-
-
 
 ;;; Test data
 ;;;;;;;;;;;;;
@@ -98,48 +90,41 @@
   ;; => true
 
   (spec/valid? ::users [{::user-id "aaa"
-                        ::username "aaa@test.com"}
-                       {::user-id "bbb"
-                        ::username "bbb@test.com"}
-                       {::user-id "ccc"
-                        ::username "ccc@test.com"}])
+                         ::username "aaa@test.com"}
+                        {::user-id "bbb"
+                         ::username "bbb@test.com"}
+                        {::user-id "ccc"
+                         ::username "ccc@test.com"}])
   ;; => true
 
   (spec/explain ::user {::user-id "aaa"
-                       ::username "aaa@test.com"})
+                        ::username "aaa@test.com"})
   ;; => nil
 
   ;; it turns out only vectors can conform to `spec/tuple`, not seqs.
   (spec/valid? ::matched-pair [{::user-id "aaa"
-                                 ::username "aaa@test.com"}
-                                {::user-id "bbb"
-                                 ::username "bbb@test.com"}])
+                                ::username "aaa@test.com"}
+                               {::user-id "bbb"
+                                ::username "bbb@test.com"}])
   ;; => true
 
   (spec/valid? ::matched-pair ({::user-id "aaa"
-                                 ::username "aaa@test.com"}
-                                {::user-id "bbb"
-                                 ::username "bbb@test.com"}))
+                                ::username "aaa@test.com"}
+                               {::user-id "bbb"
+                                ::username "bbb@test.com"}))
   ;; => false
-
-
-
-
-  ) ;; End of comment
+  )
+;; End of comment
 
 (comment
 
-  (mattermost/set-api-context {
-                               ::mattermost/base-url "https://mattermost.internal.tulip.io/api/v4"
+  (mattermost/set-api-context {::mattermost/base-url "https://mattermost.internal.tulip.io/api/v4"
                                ::mattermost/auth-token (System/getenv "ROBONONA_MATTERMOST_TOKEN")})
 
-
   (run "mattermost.internal.tulip.io"
-    (System/getenv "ROBONONA_MATTERMOST_TOKEN")
-    "general"
-    "coffeebot-dev"
-    :dry-run true)
+       (System/getenv "ROBONONA_MATTERMOST_TOKEN")
+       "general"
+       "coffeebot-dev"
+       :dry-run true))
 
-
-
-  )  ;; Comment ends here
+;; Comment ends here

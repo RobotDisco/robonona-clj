@@ -1,21 +1,21 @@
-#_ (ns robot-disco.robonona.design-journal
-  (:require
+#_(ns robot-disco.robonona.design-journal
+    (:require
    ;; Tests and specifications
-   [clojure.test :refer [deftest is testing]]
-   [clojure.spec.alpha :as spec]
-   [clojure.test.check :as test-check]
-   [clojure.spec.gen.alpha :as spec-gen]
-   [clojure.spec.test.alpha :as spec-test]
+     [clojure.test :refer [deftest is testing]]
+     [clojure.spec.alpha :as spec]
+     [clojure.test.check :as test-check]
+     [clojure.spec.gen.alpha :as spec-gen]
+     [clojure.spec.test.alpha :as spec-test]
    ;; Mattermost API client
    ;; [mattermost-clj.core :as mattermost]
    ;; [mattermost-clj.api.channels :as channels]
    ;; [mattermost-clj.api.users :as users]
    ;; HTTP client
-   [clj-http.client :as http]
-   [cheshire.core :as json]
+     [clj-http.client :as http]
+     [cheshire.core :as json]
    ;; Application logic
-   [robot-disco.robonona.coffeebot :as coffee]
-   [robot-disco.robonona.mattermost :as coffeemm]))
+     [robot-disco.robonona.coffeebot :as coffee]
+     [robot-disco.robonona.mattermost :as coffeemm]))
 
 ;;; I don't want these exploratory expressions running every single time I load
 ;;; the file; they might do side-effectful things with the systems I am
@@ -36,7 +36,7 @@
 ;;; in this journal file. I guess I'll know better when I finally wind up
 ;;; knowing what I am doing.
 
-(comment 
+(comment
 ;;; 2022-07-16 - Sketching out via real world calls
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -62,8 +62,7 @@
     :base-url (str "https://" host "/api/v4")
     :auths {"api_key" (str "Bearer " token)}})
 
-  
-  ;; What is the channel name I care about?
+;; What is the channel name I care about?
   (def channel-id (->> channel
                        (channels/teams-name-team-name-channels-name-channel-name-get team)
                        :id))
@@ -71,11 +70,9 @@
   ;; My list of active users, returned in a paged way.
   ;; Note that I had to fork the mattermost api code to enable the `:active` param.
   ;; TODO Get my `:active` modification merged into the mainline code.
-  (first (users/users-get {:page 0 :per-page 200 :active true :in-channel channel-id}))
+  (first (users/users-get {:page 0 :per-page 200 :active true :in-channel channel-id})))
 
-
-
-  ) ;; Comment ends here
+;; Comment ends here
 
 (comment
 ;;; 2022-07-16 - test to sketch out user matching API
@@ -116,21 +113,17 @@
           matches (match-users users)]
       (is (= (count matches) (/ (count users) 2)))))
 
-  (clojure.test/run-test pair-users)
+  (clojure.test/run-test pair-users))
 
+;; Comment ends here
 
-
-  ) ;; Comment ends here
-
-(comment 
+(comment
 ;;; 2022-07-17
 ;;;;;;;;;;;;;;
 ;;; Can I use `clojure.spec` to design my core matching algorithm in a consistent
 ;;; way before assuming any more details?
 
-
-
-  ;; Here are my best guess of the data model I will start caring about.
+;; Here are my best guess of the data model I will start caring about.
   ;; Notice that I have break down each individual field into a spec so any part
   ;; of a data shape can be evaluated by `spec/conform` and `spec/valid?`
   (spec/def ::id string?)
@@ -158,20 +151,17 @@
            (nil? (-> % :ret ::unmatched-user))
            (not (nil? (-> % :ret ::unmatched-user)))))
 
-  
-  ;; Normally at runtime we don't validate these argument/return value/invarant
+;; Normally at runtime we don't validate these argument/return value/invarant
   ;; specs, for performance reasons.
   ;;
   ;; You may want to explicitly turn these on for api calls to force input
   ;; checking;
   ;; `spec-test/instrument` can do this.
-  (spec-test/instrument [match-users])
+  (spec-test/instrument [match-users]))
 
+;; Comment ends here
 
-
-  ) ;; Comment ends here
-
-(comment 
+(comment
 ;;; 2022-07-17 Practialli's development flow w/ TDD + spec
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;; ;; Found at https://www.youtube.com/watch?v=mXNZxy71zT4&list=PLpr9V-R8ZxiDjyU7cQYWOEFBDR1t7t0wv&index=78
@@ -335,10 +325,8 @@
   (spec-test/check `match-users)
 
   ;; And we're done with this function!
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-17 Copied work into real file
@@ -355,10 +343,8 @@
 
 ;; It will note that at least with dated ordered transcripts it is easier to
 ;; find out what is relevant and how this whole thing evolved.
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-18 Translate mattermost user object into structure I care about
@@ -411,18 +397,16 @@
 
   ;; Apparently in spec I can't do `(spec/def ::user/id ...)` that is not a
   ;; valid keyword?
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-18 Convert list of mattermost users into matched pairs
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-  #_ (spec-test/instrument `coffee/match-users)
-  #_ (spec-test/unstrument `coffee/match-users)
-  
+  #_(spec-test/instrument `coffee/match-users)
+  #_(spec-test/unstrument `coffee/match-users)
+
   (def matches (coffee/match-users
                 (spec-gen/generate
                  (spec/gen
@@ -432,17 +416,14 @@
   ;; => false
   (spec/explain ::coffee/matches matches)
 
-
-  ;; Hmm. When I instrument my match-users function I notice that the resulting
+;; Hmm. When I instrument my match-users function I notice that the resulting
   ;; value does not conform because the keys are from `::mattermost-user`
   ;; Does this mean `::user` is unnecessary? Maybe. Let's defer until I do
   ;; enough to be annoyed by it.
   ;; TODO decide if a distinction between mattermost and coffeebot data for
   ;; users is worth it.
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-18 Fetch list of mattermost users from mattermost
@@ -452,17 +433,16 @@
   ;; My list of active users, returned in a paged way.
   ;; Note that I had to fork the mattermost api code to enable the `:active` param.
 
-
   (def token (System/getenv "ROBONONA_MATTERMOST_TOKEN"))
   (def host "mattermost.internal.tulip.io")
 
   ;; Impure function to set connection params
   (defn init
     [host token]
-      (mattermost/set-api-context
-   {:debug false
-    :base-url (str "https://" host "/api/v4")
-    :auths {"api_key" (str "Bearer " token)}}))
+    (mattermost/set-api-context
+     {:debug false
+      :base-url (str "https://" host "/api/v4")
+      :auths {"api_key" (str "Bearer " token)}}))
 
   (init host token)
 
@@ -479,11 +459,11 @@
 
   ;; This returns only a single page of data
   (defn active-users-by-channel-id-one-page
-    [channel-id]  
+    [channel-id]
     (users/users-get {:page 0
                       :active true
                       :in-channel channel-id}))
- 
+
   (first (active-users-by-channel-id-one-page channel-id))
   ;; => ({:email "fake.user@tulip.com",
   ;;      :first_name "Fake",
@@ -558,10 +538,8 @@
   ;; `active-users-by-channel-id` out as the piece with the side effect
   ;; (the actual http call? the function that calls the mattermost library and
   ;; no more?) and that can't be tested, only mocked / stubbed.
-
-
-  
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-18 TODO Next steps (not my current issue)
@@ -576,8 +554,7 @@
 
   ;; I know I'm going to have to move towards a component model anyway
   ;; for testing and separating out pure from impure functions, so.
-
-  ) ;; Comment ends here
+) ;; Comment ends here
 
 (comment
 ;;; 2022-07-19 Mattermost API as a component
@@ -637,10 +614,8 @@
   ;; Luckily the mattermost api library uses `clj-http`, which is easy to mock
   ;; via the recommended `clj-http-fake` library. Let's start TDDing a
   ;; mattermost side-effectful component.
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
 ;;; 2022-07-19 `active-users-by-channel-id` via TDD
@@ -662,10 +637,8 @@
   ;; 9. If `:fn` was used, run `spec-test/check` to do property-based testing.
   ;; 10. Document functions
   ;; 11. Refactor if desired
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
   ;;; 2022-07-19 A Snag: Abandoning `mattermost-clj`
@@ -681,17 +654,17 @@
   (def channel "coffeebot-everywhere")
 
   ;; Get channel ID
-  
+
   (def channel-id (-> (http/get (str "https://" host
                                      "/api/v4"
                                      "/teams/name/"
                                      team
                                      "/channels/name/"
                                      channel)
-                       {:query-params {"team_name" team
-                                       "channel_name" channel}
-                        :headers {"Authorization" (str "Bearer " token)}
-                        :as :json})
+                                {:query-params {"team_name" team
+                                                "channel_name" channel}
+                                 :headers {"Authorization" (str "Bearer " token)}
+                                 :as :json})
                       :body
                       :id))
 
@@ -732,10 +705,8 @@
 
   ;; I am sure this will wind up being annoying and I'll want a better fake/mock
   ;; as my calls get more complex...
-
-
-
-  )  ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
   ;;; 2022-07-20 Refactoring
@@ -757,9 +728,8 @@
   ;; Plus instrument functions I care about when testing
   ;;
   ;; I can reuse that fixture when developing I imagine.
-
-
-  )  ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
   ;;; 2022-07-20 Get channel by team and channel name
@@ -770,9 +740,9 @@
 
   (def token (System/getenv "ROBONONA_MATTERMOST_TOKEN"))
   (def host "mattermost.internal.tulip.io")
-  
+
   ;; Get channel ID
-  
+
   (http/get (str "https://" host
                  "/api/v4"
                  "/teams/name/"
@@ -826,10 +796,8 @@
   ;;      :create_at 1584705627458,
   ;;      :props nil},
   ;;     :trace-redirects []}
-  
-
-
-  )  ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
   ;;; 2022-07-20 Message people who are (un)matched
@@ -858,9 +826,7 @@
 
   ;; clj-http doesn't auto-coerce input into json. It will coerce output with
   ;; the `:as` keyword.
-
-  ) ;; Comment ends here
-
+) ;; Comment ends here
 
 (comment
   ;;; 2022-07-20 A snag: I need to know my own ID
@@ -870,10 +836,8 @@
 
   ;;; I can fetch it via `/api/v4/users/me` and my token so it's not too hard
   ;;; to get.
-
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
 (comment
   ;;; 2022-07-21 Putting it all together
@@ -892,10 +856,8 @@
 
   ;;; Woah you can use a map directly after the optional rest indicator to enable
   ;;; keyword arguments!
-
-
-
-  ) ;; Comments end here
+  )
+;; Comments end here
 
 (comment
   ;;; 2022-07-21 TODO Future Ideas
@@ -917,10 +879,8 @@
   ;; I also need to make sure I remove the bot from consideration in matches.
   ;; Unfortunately because of how I get active users, it is included in the
   ;; fetch call.
-
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.
 
 (comment
   ;;;; 2022-08-09 Bot shouldn't match itself
@@ -937,9 +897,8 @@
   ;; Also my tests don't instrument enough of the code, not enough spec tests
   ;; are being checked. Also, how do I set up a dev env where all my functions
   ;; are specc'd in a dev env?
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.
 
 (comment
   ;;;; 2022-08-09 Creating dev helpers
@@ -954,9 +913,8 @@
   ;; Practiclli's basic guide on this is at https://practical.li/clojure-staging/clojure-tools/projects/configure-repl-startup.html
   ;; The Clojure website itself goes into more depth, and even suggests eventual
   ;; third-party industrial-strength tooling: https://clojure.org/guides/repl/introduction
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.
 
 (comment
   ;;;; 2022-08-10 Run dry/integration tests from dev helper
@@ -971,9 +929,8 @@
   ;; that can run from the commandline. Possibly dry-run is a valid param?
   ;; Can I merge juxt/aero with babashka-cli?
   ;; Can I add more testing here and possibly spec?
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.
 
 (comment
   ;;;; 2022-08-19 Run as a `clj` command
@@ -993,9 +950,8 @@
   ;; `juxt/aero` really wants a single config file containing my environment
   ;; values. I think this means that it isn't great for allowing others to use
   ;; this without a lot of complex config merging. Maybe not a problem for now.
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.
 
 (comment
   ;;;; 2022-08-19 Convert to use -M form
@@ -1006,7 +962,5 @@
 
   ;; Oh if I append my args to the `clj -M:<alias>` invocation they get picked
   ;; up.
-
-
-
-  )  ;; Comment ends here.
+  )
+;; Comment ends here.

@@ -13,7 +13,6 @@
             [robot-disco.robonona.mattermost.user :as-alias user]
             [robot-disco.robonona.mattermost.channel :as-alias channel]))
 
-
 ;;; Functions to instrument
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Turn these on when developing or troubleshooting
@@ -26,7 +25,6 @@
     SUT/message-user
     SUT/get-my-info])
 
-
 (defn instrumentation-fixture [f]
   (spec-test/instrument tests-to-instrument)
   (f)
@@ -36,7 +34,6 @@
 
 ;;; Fake and mock data
 ;;;;;;;;;;;;;;;;;;;;;;
-
 
 (def fake-token "faketoken")
 (def fake-host "mattermost.test.com")
@@ -51,7 +48,6 @@
                          {:id "5qwdq6", :username "34EUwgaR"}
                          {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}))
 
-
 ;;; Tests
 ;;;;;;;;;
 
@@ -62,7 +58,6 @@
       (let [result (SUT/active-users-by-channel-id fake-channel-id)]
         (is (spec/valid? (spec/coll-of ::user/user) result))))))
 
-
 (deftest channel-id-by-team-name-and-channel-name
   (testing "Happy path"
     ;; This is how we mock/fake things simply
@@ -71,7 +66,6 @@
                     fake-team-name
                     fake-channel-name)]
         (is (spec/valid? ::channel/id result))))))
-
 
 (def json-user-mock (spec-gen/generate (spec/gen ::user/json-user)))
 
@@ -85,8 +79,6 @@
   (is (= 1 (-> (spec-test/check `SUT/json-user->user)
                (spec-test/summarize-results)
                :check-passed))))
-
-
 
 (deftest message-users
   (testing "Happy path"
@@ -110,7 +102,6 @@
             result (SUT/message-user me user fake-message)]
         (is (true? (::SUT/success result)))))))
 
-
 (deftest get-my-info
   (let [fake-response {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"}]
     (with-redefs [http/get (fn [_ _]
@@ -119,7 +110,6 @@
       (let [result (SUT/get-my-info)]
         (is (= (::user/id result) (:id fake-response)))))))
 
-
 ;;; Generative testing
 (comment
   ;; Maybe these should be their own suite of tests? Can I do that without
@@ -127,12 +117,9 @@
 
   ;; Can't test `active-users-by-channel-id` without faking a response, not
   ;; sure if it is worth it honestly as the real data logic lives elsewhere.
-  (spec-test/check `[SUT/json-user->user])
+  (spec-test/check `[SUT/json-user->user]))
 
-
-
-  )  ;; Comment ends here
-
+;; Comment ends here
 
 ;;; Scratchpad
 ;;;;;;;;;;;;;;
@@ -153,7 +140,6 @@
   (take 2 (spec-gen/generate (spec/gen ::SUT/users)))
   ;; => ({:id "5qwdq6", :username "34EUwgaR"}
   ;;     {:id "8pRMCiy34j0lm6iYy", :username "7K0S6y"})
-
-
-  ) ;; Comment ends here
+  )
+;; Comment ends here
 
