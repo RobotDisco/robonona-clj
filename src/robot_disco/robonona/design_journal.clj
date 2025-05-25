@@ -964,3 +964,51 @@
   ;; up.
   )
 ;; Comment ends here.
+
+(comment
+  ;;;; 2025-05-21 I need to make this work with slack
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Let's make this project compatible with aider.ai
+  ;; and see if vibe coding and/or copoloting helps me
+  ;; do this quickly
+  ;;
+  ;; Also, it is time to add better design, seperation
+  ;; of concerns, and move this to Babashka for quicker
+  ;; startup.
+  ;;
+  ;; To start with, let's decouple removing the bot user
+  ;; from our pairing function.
+  ;;
+  ;; OK, by having a bb.edn, we can just use babashka as our REPL in cider.
+  )
+
+(comment
+  ;;;; 2025-05-24 Get basic tests working with babaskha
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; First off, we don't have a mattermost instance anymore, so we can't rely on
+  ;; the existing tests.
+  ;;
+  ;; Also, we're way more coupled between our matching logic and our chat API
+  ;; logic, we need to fix that.
+  ;;
+  ;; So first, we switch to babashka. Goal is to eventually not need a deps.edn
+  ;; anymore.
+  ;;
+  ;; All I got to is cleaning up my coffeebot_test.clj and coffeebot.clj to
+  ;; comment out stuff that relies on mattermost APIs.
+  ;;
+  ;; Maybe I should make this so generic it doesn't even need to be used for
+  ;; just users.
+  ;;
+  ;; Hmm gotta remember in arg lists that I should use spec/cat because my args
+  ;; list isn't just a simple collection.
+  ;;
+  ;; Instrumenting _everything_ in my unit tests, not just specific functions I
+  ;; wrote, because the internet said it was a good idea.
+  ;;
+  ;; I don't know if this is a babaskha thing, but using #_ or (comment) forms
+  ;; don't prevent ::namespaced-keywords from being evaluated, so I had to
+  ;; convert them into regular namespaces.
+  )
