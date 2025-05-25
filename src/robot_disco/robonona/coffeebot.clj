@@ -40,9 +40,11 @@
   ;; We should only get an unmatched user if the input list has an odd length.
   :fn (fn [{:keys [args ret]}]
         (let [users (:coll args)]
-          (if (even? (count users))
-            (not (contains? ret ::unmatched-user))
-            (contains? ret ::unmatched-user)))))
+          (and
+           (even? (-> ::matched-users ret count))
+           (if (even? (count users))
+             (not (contains? ret ::unmatched-user))
+             (contains? ret ::unmatched-user))))))
 
 ;;; Messaging Logic
 ;;;;;;;;;;;;;;;;;;;
