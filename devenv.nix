@@ -35,6 +35,7 @@
     deps-tree.exec = "bb deps-tree";
     format.exec = "bb format";
     lint.exec = "bb lint";
+    tests.exec = "bb test";
   };
 
   enterShell = ''
@@ -42,6 +43,7 @@
     echo "  deps-tree - Show dependencies"
     echo "  format    - Autoformat code"
     echo "  lint      - Static Analysis"
+    echo "  tests     - Unit Tests"
     echo ""
 
     # Verify required tools
