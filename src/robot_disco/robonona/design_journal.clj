@@ -1012,3 +1012,21 @@
   ;; don't prevent ::namespaced-keywords from being evaluated, so I had to
   ;; convert them into regular namespaces.
   )
+
+(comment
+  ;;;; 2025-05-26 Starting to implement mock by slack
+  ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+  ;; Helped by aider.chat
+  ;;
+  ;; Playing with babashka.http-client to scope out Slack APIs
+  ;; Needed to attach to Sheep Train Workspace because I don't want to wait for
+  ;; someone to approve it for work.
+  ;;
+  ;; Aider recommended specs for the JSON message, fair. Recommended a JSON
+  ;; validation function which I'm not using yet, but did pump real API data into
+  ;; it.
+  ;;
+  ;; Created a mock client. Using protocols and records. Use this to create mocks
+  ;; for designing. Then eventually do integration tests?
+  )
