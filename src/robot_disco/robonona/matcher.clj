@@ -1,20 +1,16 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.coffeebot
-  (:require [clojure.spec.alpha :as spec]
-            [clojure.set :as set]
-            [cheshire.core :as json]
-            #_[robot-disco.robonona.mattermost :as mattermost]
-            #_[robot-disco.robonona.mattermost.user :as-alias user]))
+(ns robot-disco.robonona.matcher
+  (:require [clojure.spec.alpha :as spec]))
 
 ;;; Coffeebot pairing specifications
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(spec/def ::user some?)
-(spec/def ::matched-pair (spec/tuple ::user ::user))
+(spec/def ::item some?)
+(spec/def ::matched-pair (spec/tuple ::item ::item))
 (spec/def ::matched-pairs (spec/coll-of ::matched-pair))
-(spec/def ::unmatched-user ::user)
+(spec/def ::unmatched-item ::item)
 (spec/def ::matches (spec/keys :req [::matched-pairs]
-                               :opt [::unmatched-user]))
+                               :opt [::unmatched-item]))
 
 ;;; Pairing Logic
 ;;;;;;;;;;;;;;;;;
@@ -24,27 +20,27 @@
   (let [ignore-ids (into #{} (map :user/id ignore))]
     (remove #(ignore-ids (:user/id %)) users)))
 
-(defn match-users
+(defn match-items
   "Group users into pairs. If odd number of users, return unmatched user."
-  [users]
-  (let [shuffled (shuffle users)]
+  [coll]
+  (let [shuffled (shuffle coll)]
     (if (even? (count shuffled))
       ;; For some reason we need vectors here to conform to `spec/tuple`
       {::matched-pairs (map vec (partition 2 shuffled))}
       {::matched-pairs (map vec (partition 2 (drop 1 shuffled)))
-       ::unmatched-user (first shuffled)})))
+       ::unmatched-item (first shuffled)})))
 
-(spec/fdef match-users
-  :args (spec/cat :coll (spec/coll-of ::user :distinct true))
+(spec/fdef match-items
+  :args (spec/cat :coll (spec/coll-of ::item))
   :ret ::matches
   ;; We should only get an unmatched user if the input list has an odd length.
   :fn (fn [{:keys [args ret]}]
-        (let [users (:coll args)]
+        (let [items (:coll args)]
           (and
-           (even? (-> ::matched-users ret count))
-           (if (even? (count users))
-             (not (contains? ret ::unmatched-user))
-             (contains? ret ::unmatched-user))))))
+           (even? (-> ::matched-items ret count))
+           (if (even? (count items))
+             (not (contains? ret ::unmatched-item))
+             (contains? ret ::unmatched-item))))))
 
 ;;; Messaging Logic
 ;;;;;;;;;;;;;;;;;;;
