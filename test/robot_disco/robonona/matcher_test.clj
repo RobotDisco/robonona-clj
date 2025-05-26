@@ -1,13 +1,11 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.coffeebot-test
+(ns robot-disco.robonona.matcher-test
   (:require
    [clojure.spec.alpha :as spec]
    [clojure.spec.test.alpha :as spec-test]
    [clojure.test :refer [deftest is testing use-fixtures]]
-   [robot-disco.robonona.coffeebot :as SUT]
-   [robot-disco.robonona.mattermost.user :as-alias user]
-   #_[clj-http.client :as http]))
+   [robot-disco.robonona.matcher :as SUT]))
 
 ;;; Functions to instrument
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -22,18 +20,18 @@
 ;;; Unit tests
 ;;;;;;;;;;;;;;
 
-(deftest match-users
-  (testing "even number of users"
-    (let [users ['a 'b 'c 'd]
-          result (SUT/match-users users)]
-      (is (= (count (::SUT/matched-pairs result)) (/ (count users) 2)))
-      (is (not (contains? result ::SUT/unmatched-user)))
+(deftest match-items
+  (testing "even number of items"
+    (let [coll ['a 'b 'c 'd]
+          result (SUT/match-items coll)]
+      (is (= (count (::SUT/matched-pairs result)) (/ (count coll) 2)))
+      (is (not (contains? result ::SUT/unmatched-item)))
       (is (spec/valid? ::SUT/matches result))))
-  (testing "odd number of users"
-    (let [users ['a 'b 'c]
-          result (SUT/match-users users)]
-      (is (= (count (::SUT/matched-pairs result)) (/ (dec (count users)) 2)))
-      (is (contains? result ::SUT/unmatched-user))
+  (testing "odd number of items"
+    (let [coll ['a 'b 'c]
+          result (SUT/match-items coll)]
+      (is (= (count (::SUT/matched-pairs result)) (/ (dec (count coll)) 2)))
+      (is (contains? result ::SUT/unmatched-item))
       (is (spec/valid? ::SUT/matches result))))
   #_(testing "ignored users are not matched"
       (let [ignored [ignored-user]
@@ -41,30 +39,30 @@
             result (SUT/match-users users ignored)
             matched-users (flatten (::SUT/matched-pairs result))
             unmatched-user (::SUT/unmatched-user result)]
-        (is (not-any? #(= (-> % first ::user/id)
-                          (-> % second ::user/id))
+        (is (not-any? #(= (-> % first :user/id)
+                          (-> % second :user/id))
                       (for [x1 matched-users
                             x2 ignored]
                         [x1 x2])))
-        (is (not-any? #(= (::user/id unmatched-user) (::user/id %)) ignored)))))
+        (is (not-any? #(= (:user/id unmatched-user) (:user/id %)) ignored)))))
 
-(deftest ^:generative match-users-generative
-  (every? :pass? (spec-test/check `SUT/match-users)))
+(deftest ^:generative match-items-generative
+  (every? :pass? (spec-test/check `SUT/match-items)))
 
 #_(deftest message-unmatched-user
     (testing "happy path"
       (with-redefs [http/post (fn [_ _] {:status 201 :body {:id "aaa"}})]
-        (let [bot #::user{:username "whocares" :id "fakeid"}
-              user #::user{:id "55", :username "6HS"}
+        (let [bot #:user{:username "whocares" :id "fakeid"}
+              user #:user{:id "55", :username "6HS"}
               result (SUT/message-unmatched-user bot user "hello")]
           (is (true? result))))))
 
 #_(deftest message-matched-pair
     (testing "happy path"
       (with-redefs [http/post (fn [_ _] {:status 201 :body {:id "aaa"}})]
-        (let [bot #::user{:username "whocares" :id "fakeid"}
-              pair [#::user{:id "55", :username "6HS"}
-                    #::user{:id "9Rz81", :username "OU5YBKo"}]
+        (let [bot #:user{:username "whocares" :id "fakeid"}
+              pair [#:user{:id "55", :username "6HS"}
+                    #:user{:id "9Rz81", :username "OU5YBKo"}]
               fake-message "hello"
               result (SUT/message-matched-pair bot pair fake-message)]
           (is (true? result))))))
@@ -84,7 +82,7 @@
   (spec-test/check `SUT/match-users)
   (spec-test/summarize-results (spec-test/check `SUT/match-users))
 
-  (spec-gen/sample (spec/gen ::user/user))
+  (spec-gen/sample (spec/gen :user/user))
   ;;     #:robot-disco.robonona.mattermost.user{:id "xb7c", :username ""}
   ;;     #:robot-disco.robonona.mattermost.user{:id "Gu2", :username "03r"}
   ;;     #:robot-disco.robonona.mattermost.user{:id "", :username "A7"}
