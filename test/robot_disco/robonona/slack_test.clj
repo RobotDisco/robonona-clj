@@ -7,7 +7,9 @@
             [robot-disco.robonona.slack-mock :as mock]))
 
 (deftest channel-users-test
-  (let [slack (mock/->MockClient)]
+  (let [slack (mock/->MockClient (atom {}))
+        channel-id "C123"]
     (testing "Returns valid user collection"
-      (let [users (slack/get-channel-users slack "C123")]
+      (mock/set-channel-users! slack "C123" ["U1" "U2" "U3"])
+      (let [users (slack/get-channel-users slack channel-id)]
         (is (s/valid? ::slack/users users))))))
