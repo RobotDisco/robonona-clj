@@ -1028,5 +1028,6 @@
   ;; it.
   ;;
   ;; Created a mock client. Using protocols and records. Use this to create mocks
-  ;; for designing. Then eventually do integration tests?
+  ;; for designing. Then eventually do integration tests? Using this to also then
+  ;; test out the app logic.
   )
