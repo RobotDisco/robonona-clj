@@ -1,8 +1,7 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.slack
-  (:require [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]))
+(ns robot-disco.robonona.slack.protocol
+  (:require [clojure.spec.alpha :as s]))
 
 (s/def ::user-id string?)
 (s/def ::channel-id string?)
@@ -18,7 +17,12 @@
     "Return collection of member user IDs for the channel specified by its ID."
     [this channel-id]))
 
-(defn- validate-response
+(s/fdef get-channel-users
+  :args (s/cat :this any?
+               :channel-id ::channel-id)
+  :ret ::users)
+
+(defn validate-response
   [response]
   (let [conformed (s/conform ::response response)]
     (if (s/invalid? conformed)

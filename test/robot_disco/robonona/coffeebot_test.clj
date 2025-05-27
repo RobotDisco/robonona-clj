@@ -4,8 +4,8 @@
   (:require [clojure.spec.alpha :as s]
             [clojure.test :refer [deftest is testing]]
             [robot-disco.robonona.matcher :as match]
-            [robot-disco.robonona.slack :as slack]
-            [robot-disco.robonona.slack-mock :as mock]))
+            [robot-disco.robonona.slack.protocol :as slack]
+            [robot-disco.robonona.slack.mock :as mock]))
 
 (deftest coffeebot-test
   (testing "Test channel with even number of members"
