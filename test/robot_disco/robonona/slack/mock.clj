@@ -1,9 +1,8 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.slack-mock
-  (:require [robot-disco.robonona.slack :as slack]
-            [clojure.spec.alpha :as s]
-            [clojure.spec.gen.alpha :as gen]))
+(ns robot-disco.robonona.slack.mock
+  (:require [robot-disco.robonona.slack.protocol :as slack]
+            [clojure.spec.alpha :as s]))
 
 (defrecord MockClient [state]
   slack/Client

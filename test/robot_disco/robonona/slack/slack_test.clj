@@ -1,10 +1,10 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.slack-test
+(ns robot-disco.robonona.slack.slack-test
   (:require [clojure.test :refer [deftest is testing]]
             [clojure.spec.alpha :as s]
-            [robot-disco.robonona.slack :as slack]
-            [robot-disco.robonona.slack-mock :as mock]))
+            [robot-disco.robonona.slack.protocol :as slack]
+            [robot-disco.robonona.slack.mock :as mock]))
 
 (deftest channel-users-test
   (let [slack (mock/->MockClient (atom {}))
