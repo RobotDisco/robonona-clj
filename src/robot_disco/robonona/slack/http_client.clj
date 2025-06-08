@@ -22,4 +22,19 @@
             next-cursor (get-in body [:response_metadata :next_cursor])]
         (if (str/blank? next-cursor)
           (into users user-ids)
-          (recur next-cursor (into users user-ids)))))))
+          (recur next-cursor (into users user-ids))))))
+  (get-conversation-id [_ user-ids]
+    (let [response (http/post "https://slack.com/api/conversations.open"
+                              {:headers {:authorization (str "Bearer " token)}
+                               :query-params {:users (str/join "," user-ids)}})
+          json (json/parse-string (:body response) true)
+          body (protocol/validate-response json)]
+      (get-in body [:channel :id])))
+  (post-message [_ channel-id text]
+    (let [response (http/post "https://slack.com/api/chat.postMessage"
+                              {:headers {:authorization (str "Bearer " token)}
+                               :query-params {:channel channel-id
+                                              :text text}})
+          json (json/parse-string (:body response) true)
+          body (protocol/validate-response json)]
+      (:ok body))))
