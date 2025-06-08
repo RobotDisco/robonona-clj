@@ -11,6 +11,11 @@
     # Nix formatting
     deadnix.enable = true;
     nixfmt-rfc-style.enable = true;
+    # Ensure we don't upload secrets into git
+    ripsecrets.enable = true;
+    # Lint our kubes yaml
+    yamlfmt.enable = true;
+    yamllint.enable = true;
   };
 
   # https://devenv.sh/packages/

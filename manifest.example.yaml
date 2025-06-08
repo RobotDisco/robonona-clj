@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: coffeebot
+  namespace: coffeebot
+spec:
+  schedule: "0 12 * * 4" # Every Thursday at 08:00 (cron syntax: min hour day month weekday)
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400 # Cleanup after 24 hours
+      template:
+        spec:
+          restartPolicy: OnFailure
+          containers:
+          - name: coffee-bot
+            image: my-image-repo.io/coffeebot:2.0.3 # Your Babashka Docker image
+            imagePullPolicy: IfNotPresent
+            env:
+              - name: SLACK_TOKEN
+                valueFrom:
+                  secretKeyRef:
+                    name: coffeebot
+                    key: slack-token
+              - name: SLACK_CHANNEL
+                valueFrom:
+                  secretKeyRef:
+                    name: coffeebot
+                    key: slack-channel
+            resources:
+              limits:
+                memory: "256Mi"
+              requests:
+                memory: "128Mi"
+                cpu: "100m"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: coffeebot
+  namespace: coffeebot
+type: Opaque
+data:
+  slack-token: example-base64
+  slack-channel: example-base64
