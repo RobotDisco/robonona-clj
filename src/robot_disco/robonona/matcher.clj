@@ -20,15 +20,24 @@
   (let [ignore-ids (into #{} (map :user/id ignore))]
     (remove #(ignore-ids (:user/id %)) users)))
 
-(defn match-items
-  "Group users into pairs. If odd number of users, return unmatched user."
+(defn round-robin-match-items
+  "Group users into pairs, producing a series of round robin groupings.
+
+  If odd number of users, return unmatched user."
   [coll]
-  (let [shuffled (shuffle coll)]
-    (if (even? (count shuffled))
-      ;; For some reason we need vectors here to conform to `spec/tuple`
-      {::matched-pairs (map vec (partition 2 shuffled))}
-      {::matched-pairs (map vec (partition 2 (drop 1 shuffled)))
-       ::unmatched-item (first shuffled)})))
+  (let [num (count coll)
+        ;; Odd # of items requires n rounds, otherwise n-1.
+        rounds (if (odd? num) num (dec num))]
+    (for [round (range rounds)]
+      (let [unmatched-item (when (odd? num) (first coll))
+            unrotated-items (if (odd? num) (rest coll) coll)
+            rotated-items (concat (drop round unrotated-items)
+                                  (take round unrotated-items))
+            matched-pairs (partition 2 rotated-items)]
+        {;; For some reason we need vectors here to conform to `spec/tuple`
+         ::matched-pairs (vec matched-pairs)
+         ::unmatched-item unmatched-item
+         ::round round}))))
 
 (spec/fdef match-items
   :args (spec/cat :coll (spec/coll-of ::item))

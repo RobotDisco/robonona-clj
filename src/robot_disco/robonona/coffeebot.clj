@@ -1,29 +1,33 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
 (ns robot-disco.robonona.coffeebot
-  (:require [robot-disco.robonona.matcher :as match]
-            [robot-disco.robonona.slack.protocol :as slack]
-            [robot-disco.robonona.slack.http-client :as client]))
+  (:require
+   [clojure.edn :as edn]
+   [robot-disco.robonona.matcher :as match]
+   [robot-disco.robonona.slack.protocol :as slack]
+   [robot-disco.robonona.slack.http-client :as client]))
 
 (defn coffeebot [token channel-id]
   (let [client (client/->HttpClient token)
         users (slack/get-channel-users client channel-id)
-        matches (match/match-items users)
-        {pairs ::match/matched-pairs
-         unmatched ::match/unmatched-item} matches]
-
-    (println matches)
-
+        state (:data (edn/read-string (slurp "state.edn")))
+        matches (if-let [state-first (first state)]
+                  (if (= (into #{} users) (into #{} (conj ((comp flatten ::match/matched-pairs) state-first) (::match/unmatched-item state-first))))
+                    ;; Rather than do true random, take the existing date. and rotate names
+                    (do (prn true)
+                        (drop 1 state))
+                    ;; Channel roster has changed, so regenerate pairing
+                    (do (prn false)
+                        (match/round-robin-match-items users)))
+                  (do (prn false)
+                      (match/round-robin-match-items users)))
+        res {:date (new java.util.Date)
+             :data matches}]
+    (spit "state.edn" (pr-str res))
+    res))
     ;; Create conversations for each pair
 
-    (let [convos (map (partial slack/get-conversation-id client) pairs)]
-      (doseq [convo convos]
-        (slack/post-message client convo "Hello! This week you have been matched up as conversation partners! I hope you meet up and have a great time :)")))
-
-        ;; Create a consolation for any unmatched user
-    (when unmatched
-      (let [convo (slack/get-conversation-id client [unmatched])]
-        (slack/post-message client convo "Sorry! :( This week you haven't been matched with anyone. Better luck next week!")))))
+    ;; Create a consolation for any unmatched user
 
 (defn -main [& _]
   (coffeebot (System/getenv "SLACK_TOKEN") (System/getenv "SLACK_CHANNEL")))
@@ -32,3 +36,12 @@
 ;; run the main function if that happens.
 (when (= *file* (System/getProperty "babashka.file"))
   (apply -main *command-line-args*))
+
+;;;;;;; Dev Shit
+(into #{} (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL")))
+(let [{pairs ::match/matched-pairs unmatched ::match/unmatched-item} (match/match-items (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL")))] (into #{} (conj (flatten pairs) unmatched)))
+
+(==  (into #{} (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL"))) (let [{pairs ::match/matched-pairs unmatched ::match/unmatched-item} (match/match-items (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL")))] (into #{} (conj (flatten pairs) unmatched))))
+
+(=  (into #{} (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL"))) (let [{pairs ::match/matched-pairs unmatched ::match/unmatched-item} (match/match-items (slack/get-channel-users (http/->HttpClient (System/getenv "SLACK_TOKEN")) (System/getenv "SLACK_CHANNEL")))] (into #{} (conj (flatten pairs) unmatched))))
+true

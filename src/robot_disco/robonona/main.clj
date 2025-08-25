@@ -4,7 +4,7 @@
 (ns robot-disco.robonona.main
   (:require [babashka.cli :as cli]))
 
-(def ^:const VERSION "2.0.0-dev")
+(def ^:const VERSION "2.0.1-dev")
 
 (def cli-spec {})
 
