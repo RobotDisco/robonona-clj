@@ -1,0 +1,4 @@
+---
+# Required values - pass via --set
+slackToken: ""  # Slack bot token (stored as Secret)
+slackChannel: ""  # Slack channel ID

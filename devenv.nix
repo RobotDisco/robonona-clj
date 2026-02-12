@@ -13,9 +13,14 @@
     nixfmt-rfc-style.enable = true;
     # Ensure we don't upload secrets into git
     ripsecrets.enable = true;
-    # Lint our kubes yaml
-    yamlfmt.enable = true;
-    yamllint.enable = true;
+    # Lint Helm charts
+    helmlint = {
+      enable = true;
+      name = "helm-lint";
+      entry = "${pkgs.kubernetes-helm}/bin/helm lint helm-chart/";
+      files = "^helm-chart/";
+      pass_filenames = false;
+    };
   };
 
   # https://devenv.sh/packages/
@@ -24,6 +29,7 @@
     pkgs.babashka
     pkgs.clojure # for testing
     pkgs.clj-kondo # for linting
+    pkgs.kubernetes-helm # for helm chart management
   ];
 
   # https://devenv.sh/languages/

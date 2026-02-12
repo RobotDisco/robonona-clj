@@ -21,6 +21,26 @@ The following environment variables are optional:
 
 - ROBONONA_DRY_RUN :: Set to 1 to omit sending actual messages to mattermost. Pulling information from Mattermost will still happen.
 
+** Kubernetes Deployment
+
+A Helm chart is provided in =helm-chart/= for deploying to Kubernetes.
+
+*** Install
+#+BEGIN_SRC bash
+helm install coffeebot ./helm-chart \
+  --namespace coffeebot --create-namespace \
+  --set slackToken="xoxb-your-token" \
+  --set slackChannel="C12345678"
+#+END_SRC
+
+*** Upgrade
+#+BEGIN_SRC bash
+helm upgrade coffeebot ./helm-chart \
+  --namespace coffeebot \
+  --set slackToken="xoxb-your-token" \
+  --set slackChannel="C12345678"
+#+END_SRC
+
 ** Usage
 
 *** Print a list of everyone's birthdays and anniversaries
@@ -33,7 +53,7 @@ bb ./celebrate.clj
 bb ./coffee.clj
 #+END_SRC
 
-## Contributing
+** Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
 Please make sure to update tests as appropriate.

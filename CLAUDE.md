@@ -47,6 +47,24 @@ For Slack integration:
 - `SLACK_TOKEN` - Bot/user token for Slack API
 - `SLACK_CHANNEL` - Channel ID to fetch users from
 
+## Kubernetes Deployment
+
+The Helm chart is in `helm-chart/`. Deploy with:
+
+```bash
+# Install
+helm install coffeebot ./helm-chart \
+  --namespace coffeebot --create-namespace \
+  --set slackToken="xoxb-your-token" \
+  --set slackChannel="C12345678"
+
+# Upgrade
+helm upgrade coffeebot ./helm-chart \
+  --namespace coffeebot \
+  --set slackToken="xoxb-your-token" \
+  --set slackChannel="C12345678"
+```
+
 ## Conventions
 
 - All source files include `SPDX-License-Identifier: EPL-1.0` header

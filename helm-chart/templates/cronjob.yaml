@@ -1,0 +1,41 @@
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "coffeebot.fullname" . }}
+  labels:
+    {{- include "coffeebot.labels" . | nindent 4 }}
+spec:
+  schedule: "30 12 * * 1"  # Every Monday at 08:30 EDT / 07:30 EST (12:30 UTC)
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    spec:
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            {{- include "coffeebot.labels" . | nindent 12 }}
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: coffeebot
+              image: my-image-repo.io/coffeebot:2.0.3
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: SLACK_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "coffeebot.fullname" . }}
+                      key: slack-token
+                - name: SLACK_CHANNEL
+                  value: {{ .Values.slackChannel | quote }}
+              resources:
+                limits:
+                  memory: "256Mi"
+                requests:
+                  memory: "128Mi"
+                  cpu: "100m"
