@@ -69,3 +69,15 @@ helm upgrade coffeebot ./helm-chart \
 
 - All source files include `SPDX-License-Identifier: EPL-1.0` header
 - Commits use conventional format: `feat:`, `fix:`, `docs:`, `build:`, `test:`, `refactor:`
+
+## Versioning
+
+This project follows [semantic versioning](https://semver.org/). At the end of each session, ensure versions are incremented appropriately:
+
+- **App version** (`helm-chart/Chart.yaml` `appVersion` and image tag in `templates/cronjob.yaml`): Increment for application code changes
+- **Chart version** (`helm-chart/Chart.yaml` `version`): Increment for Helm chart changes only
+
+Version increments:
+- **MAJOR**: Breaking changes
+- **MINOR**: New features, backward compatible
+- **PATCH**: Bug fixes, minor changes
