@@ -8,9 +8,9 @@
 (defn coffeebot [token channel-id]
   (let [client (client/->HttpClient token)
         users (slack/get-channel-users client channel-id)
-        matches (match/match-items users)
+        matches (match/random-match users)
         {pairs ::match/matched-pairs
-         unmatched ::match/unmatched-item} matches]
+         unmatched ::match/unmatched-user} matches]
 
     (println matches)
 

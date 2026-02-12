@@ -29,7 +29,7 @@
       ;; Test pairing logic using mock client
       (mock/set-channel-users! slack channel-id user-ids)
       (let [result (-> (slack/get-channel-users slack channel-id)
-                       match/match-items)]
+                       match/random-match)]
         (is (s/valid? (s/coll-of (s/tuple ::slack/user-id ::slack/user-id))
                       (::match/matched-pairs result))))))
   (testing "Test channel with odd number of members"
@@ -39,10 +39,10 @@
         ;; Test pairing logic using mock client
       (mock/set-channel-users! slack channel-id user-ids)
       (let [result (-> (slack/get-channel-users slack channel-id)
-                       match/match-items)]
+                       match/random-match)]
         (is (s/valid? (s/coll-of (s/tuple ::slack/user-id ::slack/user-id))
                       (::match/matched-pairs result)))
-        (is (s/valid? ::slack/user-id (::match/unmatched-item result)))))))
+        (is (s/valid? ::slack/user-id (::match/unmatched-user result)))))))
 
 (deftest notify-matches
   (let [client (mock/->MockClient (atom {}))
@@ -54,9 +54,9 @@
 
     ;; Run our app logic
     (let [users (slack/get-channel-users client channel-id)
-          matches (match/match-items users)
+          matches (match/random-match users)
           {pairs ::match/matched-pairs
-           unmatched ::match/unmatched-item} matches]
+           unmatched ::match/unmatched-user} matches]
 
       ;; Verify specs of our result
       (is (s/valid? ::match/matches matches))
@@ -87,9 +87,9 @@
     (when (System/getenv "SLACK_CHANNEL")
       (let [client (client/->HttpClient (System/getenv "SLACK_TOKEN"))
             users (slack/get-channel-users client (System/getenv "SLACK_CHANNEL"))
-            matches (match/match-items users)
+            matches (match/random-match users)
             {pairs ::match/matched-pairs
-             unmatched ::match/unmatched-item} matches]
+             unmatched ::match/unmatched-user} matches]
 
         ;; Verify specs of our result
         (is (s/valid? ::match/matches matches))
