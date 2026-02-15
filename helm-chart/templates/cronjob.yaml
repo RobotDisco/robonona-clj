@@ -23,7 +23,7 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: coffeebot
-              image: my-image-repo.io/coffeebot:2.0.3
+              image: my-image-repo.io/coffeebot:2.1.0
               imagePullPolicy: IfNotPresent
               env:
                 - name: SLACK_TOKEN
@@ -33,9 +33,26 @@ spec:
                       key: slack-token
                 - name: SLACK_CHANNEL
                   value: {{ .Values.slackChannel | quote }}
+                - name: MATCH_ALGORITHM
+                  value: {{ .Values.matchAlgorithm | quote }}
+                {{- if .Values.persistence.enabled }}
+                - name: HISTORY_FILE
+                  value: "/data/history.edn"
+                {{- end }}
+              {{- if .Values.persistence.enabled }}
+              volumeMounts:
+                - name: history
+                  mountPath: /data
+              {{- end }}
               resources:
                 limits:
                   memory: "256Mi"
                 requests:
                   memory: "128Mi"
                   cpu: "100m"
+          {{- if .Values.persistence.enabled }}
+          volumes:
+            - name: history
+              persistentVolumeClaim:
+                claimName: {{ include "coffeebot.fullname" . }}-history
+          {{- end }}

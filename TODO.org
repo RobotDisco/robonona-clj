@@ -1,1 +1,2 @@
-- Check BambooHR for people who are out on vacation
+* TODO Check BambooHR for people who are out on vacation
+* TODO Automate deployment workflow

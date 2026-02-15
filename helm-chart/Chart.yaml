@@ -3,5 +3,5 @@ apiVersion: v2
 name: coffeebot
 description: A Helm chart for Coffeebot - random coffee pairing bot for Slack
 type: application
-version: 0.1.0
-appVersion: "2.0.3"
+version: 0.2.0
+appVersion: "2.1.0"

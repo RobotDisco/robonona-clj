@@ -2,6 +2,7 @@
 
 (ns robot-disco.robonona.matcher
   (:require [clojure.spec.alpha :as spec]
+            [robot-disco.robonona.history :as history]
             [robot-disco.robonona.slack.protocol :as slack]))
 
 ;;; Coffeebot pairing specifications
@@ -43,29 +44,85 @@
             (not (contains? ret ::unmatched-user))
             (contains? ret ::unmatched-user)))))
 
-;;; Messaging Logic
-;;;;;;;;;;;;;;;;;;;
+;;; Round-Robin Pairing Logic
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(def matched-message
-  "Hello! This week you have been matched up as conversation partners! I hope you meet up and have a great time :)")
+(defn- all-pairs
+  "Generate all possible pairs from a collection of users."
+  [users]
+  (let [user-vec (vec users)]
+    (for [i (range (count user-vec))
+          j (range (inc i) (count user-vec))]
+      [(nth user-vec i) (nth user-vec j)])))
 
-(def unmatched-message
-  "Sorry! :( This week you haven't been matched with anyone. Better luck next week!")
+(defn- calculate-pair-priority
+  "Calculate priority for pairing two users.
+   Higher priority = should be paired sooner.
+   Never met = Long/MAX_VALUE
+   Otherwise = milliseconds since last meeting."
+  [history user-a user-b now]
+  (let [pair-key (history/make-pair-key user-a user-b)
+        last-met (get history pair-key)]
+    (if last-met
+      (- (.getTime now) (.getTime last-met))
+      Long/MAX_VALUE)))
 
-#_(defn message-unmatched-user
-    "As `bot`, send `message` to `user`"
-    [bot user message]
-    (:mattermost/success (mattermost/message-user bot user message)))
+(defn round-robin-match
+  "Match users using round-robin-like algorithm that prioritizes
+   users who haven't met or met longest ago.
 
-#_(spec/fdef message-unmatched-user
-    :args (spec/cat :bot :user/user :user :user/user :message string?)
-    :ret boolean?)
+   Takes a collection of users and a history map (pair-key -> last-met timestamp).
+   Returns same structure as random-match: ::matched-pairs and optionally ::unmatched-user."
+  [users history]
+  (if (< (count users) 2)
+    ;; Handle edge cases: 0 or 1 users
+    (if (seq users)
+      {::matched-pairs []
+       ::unmatched-user (first users)}
+      {::matched-pairs []})
+    ;; Normal case: 2+ users
+    (let [now (java.util.Date.)
+          user-vec (vec users)
 
-#_(defn message-matched-pair
-    [bot pair message]
-    (:mattermost/success (mattermost/message-users (conj pair bot) message)))
+          ;; Calculate priorities for all pairs
+          pair-priorities (->> (all-pairs user-vec)
+                               (map (fn [[a b]]
+                                      {:pair [a b]
+                                       :priority (calculate-pair-priority history a b now)}))
+                               (sort-by :priority >))  ;; Highest priority first
 
-#_(spec/fdef message-matched-pair
-    :args (spec/cat :bot :user/user :pair ::matched-pair :message string?)
-    :ret boolean?)
+          ;; Greedy matching
+          result (loop [remaining (set user-vec)
+                        priorities pair-priorities
+                        matches []]
+                   (if (< (count remaining) 2)
+                     {:matches matches
+                      :unmatched (first remaining)}
+                     (let [;; Find best available pair
+                           best (first (filter (fn [{:keys [pair]}]
+                                                 (and (remaining (first pair))
+                                                      (remaining (second pair))))
+                                               priorities))]
+                       (if best
+                         (recur (disj remaining (first (:pair best)) (second (:pair best)))
+                                priorities
+                                (conj matches (vec (:pair best))))
+                         ;; No valid pairs found (shouldn't happen with 2+ remaining)
+                         {:matches matches
+                          :unmatched (first remaining)}))))]
+
+      (if (:unmatched result)
+        {::matched-pairs (:matches result)
+         ::unmatched-user (:unmatched result)}
+        {::matched-pairs (:matches result)}))))
+
+(spec/fdef round-robin-match
+  :args (spec/cat :users (spec/coll-of ::user-id)
+                  :history ::history/pairing-history)
+  :ret ::matches
+  :fn (fn [{:keys [args ret]}]
+        (let [users (:users args)]
+          (if (even? (count users))
+            (not (contains? ret ::unmatched-user))
+            (contains? ret ::unmatched-user)))))
 

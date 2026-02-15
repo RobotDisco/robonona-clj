@@ -70,6 +70,18 @@ helm upgrade coffeebot ./helm-chart \
 - All source files include `SPDX-License-Identifier: EPL-1.0` header
 - Commits use conventional format: `feat:`, `fix:`, `docs:`, `build:`, `test:`, `refactor:`
 
+## Development Practices
+
+- **Test-driven development** - Write tests before implementation
+- **Functional programming** - Isolate state management; prefer pure functions
+- **Clojure spec** - Use specs for data validation and generative testing
+
+## Development Workflow
+
+- **Local development** - Done via the REPL
+- **Local testing** - Run tests via Babashka (`bb test`)
+- **Deployment** - Assumes Kubernetes (see Helm chart in `helm-chart/`)
+
 ## Versioning
 
 This project follows [semantic versioning](https://semver.org/). At the end of each session, ensure versions are incremented appropriately:

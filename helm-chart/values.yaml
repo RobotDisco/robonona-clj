@@ -2,3 +2,12 @@
 # Required values - pass via --set
 slackToken: ""  # Slack bot token (stored as Secret)
 slackChannel: ""  # Slack channel ID
+
+# Matching algorithm: "random" or "round-robin"
+matchAlgorithm: "random"
+
+# Persistence for round-robin history
+persistence:
+  enabled: false  # Enable for round-robin matching
+  size: 100Mi
+  storageClassName: ""  # Use default storage class
