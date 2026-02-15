@@ -2,3 +2,116 @@
 * TODO Automate deployment workflow
 * TODO Set up Mattermost test environment
   Needed to verify Mattermost protocol refactoring works correctly.
+* TODO Test Mattermost implementation against real server
+  The mattermost/http_client.clj was ported to babashka.http-client but remains untested.
+* TODO Verify Nix build still works
+  checkPhase changed from clj to bb test; need to confirm pkgs.babashka is available.
+
+* Spec Improvements
+** TODO [#A] Add custom generator for ::pair-key spec
+   *Purpose:* Enable generative testing for round-robin-match.
+
+   The current ~::pair-key~ spec uses a predicate ~#(neg? (compare ...))~ that
+   spec cannot use to generate values. This blocks ~spec-test/check~ from
+   working on any function that takes ~::pairing-history~ as input.
+
+   *Location:* src/robot_disco/robonona/history.clj
+
+   *Fix:* Add ~spec/with-gen~ that generates two user IDs and sorts them:
+   #+BEGIN_SRC clojure
+   (spec/def ::pair-key
+     (spec/with-gen
+       (spec/and (spec/tuple ::slack/user-id ::slack/user-id)
+                 #(neg? (compare (first %) (second %))))
+       #(gen/fmap (fn [[a b]] (vec (sort [a b])))
+                  (gen/tuple (s/gen ::slack/user-id)
+                             (s/gen ::slack/user-id)))))
+   #+END_SRC
+
+** TODO [#A] Add generative test for round-robin-match
+   *Purpose:* Catch edge cases and invariant violations through property-based testing.
+
+   ~random-match~ has generative testing but ~round-robin-match~ does not. The
+   round-robin algorithm is more complex and would benefit more from generative
+   testing. Requires the ~::pair-key~ generator fix first.
+
+   *Location:* test/robot_disco/robonona/matcher_test.clj
+
+   *Fix:* Add test similar to ~random-match-generative~:
+   #+BEGIN_SRC clojure
+   (deftest ^:generative round-robin-match-generative
+     (is (every? (comp :pass? :clojure.spec.test.check/ret)
+                 (spec-test/check `SUT/round-robin-match))))
+   #+END_SRC
+
+** TODO [#B] Add runtime validation when reading history file
+   *Purpose:* Fail fast with clear error messages if history file is corrupted.
+
+   Currently ~read-history~ trusts that the file contains valid EDN in the
+   expected shape. A corrupted or hand-edited file could cause confusing errors
+   deep in the matching logic.
+
+   *Location:* src/robot_disco/robonona/history.clj
+
+   *Fix:* Validate against ~::state~ spec after reading:
+   #+BEGIN_SRC clojure
+   (defn read-history [file-path]
+     (if (.exists (io/file file-path))
+       (let [state (edn/read-string (slurp file-path))]
+         (if (spec/valid? ::state state)
+           state
+           (throw (ex-info "Invalid history file"
+                           (spec/explain-data ::state state)))))
+       {::pairing-history {}}))
+   #+END_SRC
+
+** TODO [#B] Simplify redundant inline specs in tests
+   *Purpose:* Reduce duplication and improve test readability.
+
+   Some tests construct specs inline that already exist as named specs:
+   #+BEGIN_SRC clojure
+   ;; Current (redundant)
+   (is (s/valid? (s/coll-of (s/tuple ::slack/user-id ::slack/user-id))
+                 (::match/matched-pairs result)))
+
+   ;; Better
+   (is (s/valid? ::match/matched-pairs (::match/matched-pairs result)))
+
+   ;; Best (validate whole structure)
+   (is (s/valid? ::match/matches result))
+   #+END_SRC
+
+   *Location:* test/robot_disco/robonona/coffeebot_test.clj
+
+** TODO [#C] Add fdef spec for coffeebot function
+   *Purpose:* Document the orchestrator's contract for future maintainers.
+
+   The main ~coffeebot~ function has no spec. While not critical (it's a
+   top-level function), adding one documents expected inputs.
+
+   *Location:* src/robot_disco/robonona/coffeebot.clj
+
+   *Fix:*
+   #+BEGIN_SRC clojure
+   (spec/fdef coffeebot
+     :args (spec/cat :client any?
+                     :channel-id ::slack/channel-id
+                     :opts (spec/keys* :opt-un [::algorithm ::history-file])))
+   #+END_SRC
+
+** TODO [#C] Consider tightening ::user-id spec
+   *Purpose:* Catch invalid user IDs earlier in development.
+
+   Currently ~::user-id~ accepts any string. Slack user IDs follow a pattern
+   (start with U, alphanumeric). A tighter spec could catch bugs earlier.
+
+   *Trade-off:* Test data would need to use realistic IDs like ~"U123ABC"~
+   instead of simple ~"U1"~. May not be worth the friction for this codebase
+   size.
+
+   *Location:* src/robot_disco/robonona/slack/protocol.clj
+
+   *Possible fix:*
+   #+BEGIN_SRC clojure
+   (s/def ::user-id (s/and string? #(re-matches #"U[A-Z0-9]+" %)))
+   #+END_SRC
