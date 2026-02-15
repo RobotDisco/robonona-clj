@@ -10,7 +10,7 @@ Robonona is a Clojure application for workplace chat integrations, primarily "co
 
 ```bash
 bb test              # Run unit tests (excludes integration tests)
-bb test:full         # Run all tests including integration tests
+bb test:full         # DO NOT RUN - makes real API calls; user runs manually
 bb lint              # Run clj-kondo linter
 bb format            # Autoformat code with cljfmt
 bb robonona-version  # Show current version from VERSION file

@@ -10,14 +10,17 @@
   lint {:doc "Run linter"
         :task (shell "clj-kondo --lint src test --config '{:output {:exclude-files [\"src/robot_disco/robonona/design_journal.clj\"]}}'")}
 
-  test {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
-                                                           :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
-        :task (exec 'cognitect.test-runner.api/test)
-        :exec-args {:excludes [:integration]}}
+  ;; === Test runner (Babashka-native, no external deps) ===
+  ;; See script/test_runner.clj for implementation details.
+  ;; Tests tagged with ^:integration metadata are excluded by default.
 
-  test:full {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
-                                                                :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
-             :task (exec 'cognitect.test-runner.api/test)}
+  test
+  {:doc "Run unit tests, EXCLUDING tests tagged with ^:integration metadata"
+   :task (shell "bb script/test_runner.clj")}
+
+  test:full
+  {:doc "Run ALL tests, INCLUDING tests tagged with ^:integration metadata"
+   :task (shell "bb script/test_runner.clj --all")}
 
   ;; === Version management ===
 
