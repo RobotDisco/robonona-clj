@@ -1,6 +1,6 @@
 * Robonona
 
-Robonona is a collection of mattermost integrations which I use at my mattermost-based workplace for cultural reasons
+Robonona is a coffeebot for workplace chat platforms (Slack and Mattermost) that randomly pairs employees for coffee chats.
 
 ** Installation
 
@@ -8,65 +8,109 @@ Robonona is a collection of mattermost integrations which I use at my mattermost
 
 ** Configuration
 
-*** Slack Coffeebot
+*** Chat Backend
 
-The coffeebot pairs users from a Slack channel for coffee chats.
+- =ROBONONA_CHAT_BACKEND= :: Chat service to use (default: =slack=)
+  - =slack= :: Use Slack
+  - =mattermost= :: Use Mattermost (untested, best-effort implementation)
 
-**** Required
-- =SLACK_TOKEN= :: Bot/user token for Slack API
-- =SLACK_CHANNEL= :: Channel ID to fetch users from
+*** Slack Configuration
 
-**** Optional
-- =MATCH_ALGORITHM= :: Matching algorithm to use (default: =random=)
+Required when =ROBONONA_CHAT_BACKEND=slack=:
+
+- =ROBONONA_SLACK_TOKEN= :: Bot/user token for Slack API
+- =ROBONONA_SLACK_CHANNEL= :: Channel ID to fetch users from
+
+*** Mattermost Configuration
+
+*Note:* Mattermost support is untested and provided as a best-effort implementation. Please report issues or contribute fixes if you encounter problems.
+
+Required when =ROBONONA_CHAT_BACKEND=mattermost=:
+
+- =ROBONONA_MATTERMOST_URL= :: Mattermost API base URL (e.g., =https://mattermost.example.com/api/v4=)
+- =ROBONONA_MATTERMOST_TOKEN= :: Personal access token or bot token
+- =ROBONONA_MATTERMOST_TEAM= :: Team name
+- =ROBONONA_MATTERMOST_CHANNEL= :: Channel name
+
+*** Matching Configuration
+
+- =ROBONONA_MATCH_ALGORITHM= :: Matching algorithm to use (default: =random=)
   - =random= :: Pure random pairing each run
   - =round-robin= :: Tracks history to ensure users meet everyone before repeating
-- =HISTORY_FILE= :: Path to EDN file for storing pairing history (required if =MATCH_ALGORITHM=round-robin=)
+- =ROBONONA_MATCH_HISTORY_FILE= :: Path to EDN file for storing pairing history
 
 **** Configuration Rules
-- If =MATCH_ALGORITHM=round-robin=, then =HISTORY_FILE= must be set (the program will exit with an error otherwise)
-- If =HISTORY_FILE= is set but =MATCH_ALGORITHM=random=, the history file is simply unused
+- If =ROBONONA_MATCH_ALGORITHM=round-robin=, then =ROBONONA_MATCH_HISTORY_FILE= must be set (the program will exit with an error otherwise)
+- If =ROBONONA_MATCH_HISTORY_FILE= is set but =ROBONONA_MATCH_ALGORITHM=random=, the history file is simply unused
 
-*** Legacy Mattermost
+**** Persistent Storage for Round-Robin
+When using round-robin matching, the history file must persist between runs. For Docker, mount a volume:
 
-The following environment variables are for legacy Mattermost integrations:
-
-- =ROBONONA_MATTERMOST_URL= :: The hostname of your mattermost instance
-- =ROBONONA_MATTERMOST_USER= :: The user that this script will operate as
-- =ROBONONA_MATTERMOST_PASSWORD= :: The password for said user
-- =ROBONONA_MATTERMOST_CHANNEL= :: The channel this script will use
-- =ROBONONA_BIRTHDAY_ICAL_URL= :: The URL for the BambooHR birthday iCalendar
-- =ROBONONA_ANNIVERSARY_ICAL_URL= :: The URL for the BambooHR anniversary iCalendar
-- =ROBONONA_DRY_RUN= :: Set to 1 to omit sending actual messages to mattermost
-
-** Kubernetes Deployment
-
-A Helm chart is provided in =helm-chart/= for deploying to Kubernetes.
-
-*** Install (Random Matching)
 #+BEGIN_SRC bash
-helm install coffeebot ./helm-chart \
-  --namespace coffeebot --create-namespace \
-  --set slackToken="xoxb-your-token" \
-  --set slackChannel="C12345678"
+docker run -v /path/on/host:/data \
+  -e ROBONONA_MATCH_ALGORITHM=round-robin \
+  -e ROBONONA_MATCH_HISTORY_FILE=/data/history.edn \
+  ...
 #+END_SRC
 
-*** Install (Round-Robin Matching)
+For Kubernetes, enable persistence in your Helm values (see Deployment section).
+
+** Building and Deployment
+
+*** Build Docker Image
 #+BEGIN_SRC bash
-helm install coffeebot ./helm-chart \
-  --namespace coffeebot --create-namespace \
-  --set slackToken="xoxb-your-token" \
-  --set slackChannel="C12345678" \
-  --set matchAlgorithm="round-robin" \
-  --set persistence.enabled=true
+bb docker:build
 #+END_SRC
 
-*** Upgrade
-#+BEGIN_SRC bash
-helm upgrade coffeebot ./helm-chart \
-  --namespace coffeebot \
-  --set slackToken="xoxb-your-token" \
-  --set slackChannel="C12345678"
+*** Deploy to Kubernetes
+
+1. Create a =values.yaml= file with your configuration (do not commit):
+
+For Slack:
+#+BEGIN_SRC yaml
+slack:
+  token: "xoxb-your-token"
+  channel: "C12345678"
 #+END_SRC
+
+For Slack with round-robin matching:
+#+BEGIN_SRC yaml
+slack:
+  token: "xoxb-your-token"
+  channel: "C12345678"
+match:
+  algorithm: "round-robin"
+persistence:
+  enabled: true
+#+END_SRC
+
+For Mattermost:
+#+BEGIN_SRC yaml
+chatBackend: "mattermost"
+mattermost:
+  url: "https://mattermost.example.com/api/v4"
+  token: "your-token"
+  team: "myteam"
+  channel: "coffeebot"
+#+END_SRC
+
+2. Deploy:
+#+BEGIN_SRC bash
+ROBONONA_IMAGE_REPO=ghcr.io/myorg ROBONONA_HELM_VALUES_FILE=values.yaml bb deploy
+#+END_SRC
+
+*** Other Commands
+#+BEGIN_SRC bash
+bb docker:build       # Build image locally
+bb docker:push        # Push to registry (requires ROBONONA_IMAGE_REPO)
+bb helm:template      # Preview rendered Kubernetes manifests
+bb helm:status        # Check deployment status
+bb helm:uninstall     # Remove deployment
+#+END_SRC
+
+*** Environment Variables
+- =ROBONONA_IMAGE_REPO= :: Docker registry (e.g., =ghcr.io/myorg=) - required for push/deploy
+- =ROBONONA_HELM_VALUES_FILE= :: Path to your values.yaml file
 
 ** Usage
 

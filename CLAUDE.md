@@ -35,7 +35,11 @@ bb src/robot_disco/robonona/coffeebot.clj
 
 - **coffeebot.clj** - Main application logic that orchestrates matching and messaging. Also serves as the Babashka script entry point.
 
-- **mattermost.clj** - Legacy Mattermost API client with pagination handling
+- **mattermost/protocol.clj** - Mattermost client protocol (mirrors Slack protocol). *Untested, best-effort implementation.*
+
+- **mattermost/http_client.clj** - HTTP implementation of the Mattermost protocol. *Untested, best-effort implementation.*
+
+- **legacy/mattermost.clj** - Legacy Mattermost API client (kept for reference, unused)
 
 ### Testing
 
@@ -43,26 +47,34 @@ Tests use `clojure.spec.test.alpha` for property-based testing. A mock client (`
 
 ## Environment Variables
 
-For Slack integration:
-- `SLACK_TOKEN` - Bot/user token for Slack API
-- `SLACK_CHANNEL` - Channel ID to fetch users from
+All environment variables use the `ROBONONA_` prefix:
+
+- `ROBONONA_CHAT_BACKEND` - Chat service: `slack` (default) or `mattermost`
+- `ROBONONA_SLACK_TOKEN` - Slack bot/user token
+- `ROBONONA_SLACK_CHANNEL` - Slack channel ID
+- `ROBONONA_MATTERMOST_URL` - Mattermost API base URL
+- `ROBONONA_MATTERMOST_TOKEN` - Mattermost access token
+- `ROBONONA_MATTERMOST_TEAM` - Mattermost team name
+- `ROBONONA_MATTERMOST_CHANNEL` - Mattermost channel name
+- `ROBONONA_MATCH_ALGORITHM` - `random` (default) or `round-robin`
+- `ROBONONA_MATCH_HISTORY_FILE` - Path to history file (required for round-robin)
 
 ## Kubernetes Deployment
 
 The Helm chart is in `helm-chart/`. Deploy with:
 
 ```bash
-# Install
+# Install (Slack)
 helm install coffeebot ./helm-chart \
   --namespace coffeebot --create-namespace \
-  --set slackToken="xoxb-your-token" \
-  --set slackChannel="C12345678"
+  --set slack.token="xoxb-your-token" \
+  --set slack.channel="C12345678"
 
 # Upgrade
 helm upgrade coffeebot ./helm-chart \
   --namespace coffeebot \
-  --set slackToken="xoxb-your-token" \
-  --set slackChannel="C12345678"
+  --set slack.token="xoxb-your-token" \
+  --set slack.channel="C12345678"
 ```
 
 ## Conventions

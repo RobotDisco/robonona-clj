@@ -1,2 +1,4 @@
 * TODO Check BambooHR for people who are out on vacation
 * TODO Automate deployment workflow
+* TODO Set up Mattermost test environment
+  Needed to verify Mattermost protocol refactoring works correctly.

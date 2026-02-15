@@ -15,9 +15,15 @@ WORKDIR /app
 # Copy necessary files
 COPY --from=builder /app/coffeebot.jar ./coffeebot.jar
 
-# Required environment variables
-ENV SLACK_TOKEN=""
-ENV SLACK_CHANNEL=""g
+# Chat backend: "slack" (default) or "mattermost"
+ENV ROBONONA_CHAT_BACKEND="slack"
+# Slack config (required if using slack backend)
+ENV ROBONONA_SLACK_TOKEN=""
+ENV ROBONONA_SLACK_CHANNEL=""
+# Matching algorithm: "random" (default) or "round-robin"
+ENV ROBONONA_MATCH_ALGORITHM="random"
+# Required for round-robin: path to history file (needs persistent volume)
+ENV ROBONONA_MATCH_HISTORY_FILE=""
 
 # Run babashka uberjar
 CMD ["bb", "--jar", "./coffeebot.jar"]

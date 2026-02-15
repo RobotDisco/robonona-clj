@@ -23,21 +23,38 @@ spec:
           restartPolicy: OnFailure
           containers:
             - name: coffeebot
-              image: my-image-repo.io/coffeebot:2.1.0
+              image: my-image-repo.io/coffeebot:3.0.0
               imagePullPolicy: IfNotPresent
               env:
-                - name: SLACK_TOKEN
+                - name: ROBONONA_CHAT_BACKEND
+                  value: {{ .Values.chatBackend | quote }}
+                - name: ROBONONA_MATCH_ALGORITHM
+                  value: {{ .Values.match.algorithm | quote }}
+                {{- if .Values.persistence.enabled }}
+                - name: ROBONONA_MATCH_HISTORY_FILE
+                  value: "/data/history.edn"
+                {{- end }}
+                {{- if eq .Values.chatBackend "slack" }}
+                - name: ROBONONA_SLACK_TOKEN
                   valueFrom:
                     secretKeyRef:
                       name: {{ include "coffeebot.fullname" . }}
                       key: slack-token
-                - name: SLACK_CHANNEL
-                  value: {{ .Values.slackChannel | quote }}
-                - name: MATCH_ALGORITHM
-                  value: {{ .Values.matchAlgorithm | quote }}
-                {{- if .Values.persistence.enabled }}
-                - name: HISTORY_FILE
-                  value: "/data/history.edn"
+                - name: ROBONONA_SLACK_CHANNEL
+                  value: {{ .Values.slack.channel | quote }}
+                {{- end }}
+                {{- if eq .Values.chatBackend "mattermost" }}
+                - name: ROBONONA_MATTERMOST_URL
+                  value: {{ .Values.mattermost.url | quote }}
+                - name: ROBONONA_MATTERMOST_TOKEN
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "coffeebot.fullname" . }}
+                      key: mattermost-token
+                - name: ROBONONA_MATTERMOST_TEAM
+                  value: {{ .Values.mattermost.team | quote }}
+                - name: ROBONONA_MATTERMOST_CHANNEL
+                  value: {{ .Values.mattermost.channel | quote }}
                 {{- end }}
               {{- if .Values.persistence.enabled }}
               volumeMounts:

@@ -1,6 +1,8 @@
 ;;; SPDX-License-Identifier: EPL-1.0
 
-(ns robot-disco.robonona.mattermost
+(ns robot-disco.robonona.legacy.mattermost
+  "LEGACY: Original Mattermost implementation using dynamic context.
+   Kept for reference. See mattermost/http_client.clj for the new protocol-based implementation."
   (:require [clojure.set]
             [clojure.spec.alpha :as spec]
             [clj-http.client :as http]

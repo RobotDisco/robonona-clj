@@ -1,6 +1,9 @@
 ;;; SPDX-License-Identifier: EPL-1.0
+;;;
+;;; LEGACY: Tests for the original Mattermost implementation.
+;;; All tests are commented out. Kept for reference only.
 
-;; (ns robot-disco.robonona.mattermost-test
+;; (ns robot-disco.robonona.legacy.mattermost-test
 ;;   (:require [clojure.spec.alpha :as spec]
 ;;             [clojure.spec.gen.alpha :as spec-gen]
 ;;             [clojure.spec.test.alpha :as spec-test]
@@ -8,7 +11,7 @@
 
 ;;             [clj-http.client :as http]
 
-;;             [robot-disco.robonona.mattermost :as SUT]
+;;             [robot-disco.robonona.legacy.mattermost :as SUT]
 
 ;;             [robot-disco.robonona.mattermost.user :as-alias user]
 ;;             [robot-disco.robonona.mattermost.channel :as-alias channel]))

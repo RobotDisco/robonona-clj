@@ -1,10 +1,22 @@
 ---
-# Required values - pass via --set
-slackToken: ""  # Slack bot token (stored as Secret)
-slackChannel: ""  # Slack channel ID
+# Chat backend: "slack" or "mattermost"
+chatBackend: "slack"
 
-# Matching algorithm: "random" or "round-robin"
-matchAlgorithm: "random"
+# Slack configuration (required when chatBackend: slack)
+slack:
+  token: ""  # Slack bot token (stored as Secret)
+  channel: ""  # Slack channel ID
+
+# Mattermost configuration (required when chatBackend: mattermost)
+mattermost:
+  url: ""  # Mattermost API base URL (e.g., https://mattermost.example.com/api/v4)
+  token: ""  # Personal access token or bot token (stored as Secret)
+  team: ""  # Team name
+  channel: ""  # Channel name
+
+# Matching configuration
+match:
+  algorithm: "random"  # "random" or "round-robin"
 
 # Persistence for round-robin history
 persistence:
