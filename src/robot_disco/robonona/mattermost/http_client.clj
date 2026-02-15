@@ -3,7 +3,7 @@
 (ns robot-disco.robonona.mattermost.http-client
   "HTTP implementation of the Mattermost client protocol."
   (:require [robot-disco.robonona.mattermost.protocol :as protocol]
-            [clj-http.client :as http]
+            [babashka.http-client :as http]
             [cheshire.core :as json]))
 
 ;;; Constants
@@ -32,19 +32,19 @@
     (loop [results []
            page 0]
       (let [url (str base-url "/users")
-            query-params {"page" page
-                          "per_page" max-items-per-page
-                          "active" true
-                          "in_channel" channel-id}
-            response (:body (http/get url
-                                      {:query-params query-params
-                                       :headers {"Authorization" (str "Bearer " token)}
-                                       :as :json}))
+            query-params {:page page
+                          :per_page max-items-per-page
+                          :active true
+                          :in_channel channel-id}
+            response (http/get url
+                               {:query-params query-params
+                                :headers {:authorization (str "Bearer " token)}})
+            body (json/parse-string (:body response) true)
             ;; Extract just the user IDs (protocol expects IDs, not full user objects)
-            user-ids (map :id response)
+            user-ids (map :id body)
             accumulated-results (into results user-ids)
             continue? (and (< page request-page-limit)
-                           (= (count response) max-items-per-page))]
+                           (= (count body) max-items-per-page))]
         (if continue?
           (do
             (Thread/sleep interval-between-requests)
@@ -57,20 +57,20 @@
                      "/channels/direct"
                      "/channels/group")
           response (http/post (str base-url endpoint)
-                              {:headers {"Authorization" (str "Bearer " token)}
-                               :body (json/generate-string members)
-                               :content-type :json
-                               :as :json})]
-      (get-in response [:body :id])))
+                              {:headers {:authorization (str "Bearer " token)
+                                         :content-type "application/json"}
+                               :body (json/generate-string members)})
+          body (json/parse-string (:body response) true)]
+      (:id body)))
 
   (post-message [_ channel-id text]
     (let [response (http/post (str base-url "/posts")
-                              {:headers {"Authorization" (str "Bearer " token)}
-                               :content-type :json
-                               :body (json/generate-string {"channel_id" channel-id
-                                                            "message" text})
-                               :as :json})]
-      (get-in response [:body :id]))))
+                              {:headers {:authorization (str "Bearer " token)
+                                         :content-type "application/json"}
+                               :body (json/generate-string {:channel_id channel-id
+                                                            :message text})})
+          body (json/parse-string (:body response) true)]
+      (:id body))))
 
 ;;; Helper functions
 ;;;;;;;;;;;;;;;;;;;;
@@ -82,6 +82,6 @@
   (let [{:keys [base-url token team]} client
         url (str base-url "/teams/name/" team "/channels/name/" channel-name)
         response (http/get url
-                           {:headers {"Authorization" (str "Bearer " token)}
-                            :as :json})]
-    (get-in response [:body :id])))
+                           {:headers {:authorization (str "Bearer " token)}})
+        body (json/parse-string (:body response) true)]
+    (:id body)))
