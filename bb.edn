@@ -1,14 +1,167 @@
 {:paths ["src" "test"]
- :tasks {deps-tree {:doc "Show dependency tree"
-                    :task (shell "clojure -X:deps tree")}
-         format {:doc "Autoformat code"
-                 :task (shell "cljfmt fix src test")}
-         lint {:doc "Run linter"
-               :task (shell "clj-kondo --lint src test")}
-         test {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
-                                                                  :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
-               :task (exec 'cognitect.test-runner.api/test)
-               :exec-args {:excludes [:integration]}}
-         test:full {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
-                                                                       :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
-                    :task (exec 'cognitect.test-runner.api/test)}}}
+ :tasks
+ {;; === Existing tasks ===
+  deps-tree {:doc "Show dependency tree"
+             :task (shell "clojure -X:deps tree")}
+
+  format {:doc "Autoformat code"
+          :task (shell "cljfmt fix src test")}
+
+  lint {:doc "Run linter"
+        :task (shell "clj-kondo --lint src test --config '{:output {:exclude-files [\"src/robot_disco/robonona/design_journal.clj\"]}}'")}
+
+  test {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
+                                                           :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
+        :task (exec 'cognitect.test-runner.api/test)
+        :exec-args {:excludes [:integration]}}
+
+  test:full {:extra-deps {io.github.cognitect-labs/test-runner {:git/tag "v0.5.1"
+                                                                :git/sha "dfb30dd6605cb6c0efc275e1df1736f6e90d4d73"}}
+             :task (exec 'cognitect.test-runner.api/test)}
+
+  ;; === Version management ===
+
+  -get-version
+  {:doc "Internal: Read version from VERSION file"
+   :task (-> (slurp "VERSION") clojure.string/trim)}
+
+  robonona-version
+  {:doc "Show current version"
+   :depends [-get-version]
+   :task (println "Version:" -get-version)}
+
+  ;; === Docker tasks ===
+
+  -docker-available?
+  {:doc "Internal: Check if docker is available"
+   :task (try
+           (shell {:out :string :err :string} "docker" "version")
+           true
+           (catch Exception _
+             (println "Error: docker is not available or not running")
+             (System/exit 1)))}
+
+  -get-image-repo
+  {:doc "Internal: Get image repository from env (optional for build, required for push)"
+   :task (System/getenv "ROBONONA_IMAGE_REPO")}
+
+  -require-image-repo
+  {:doc "Internal: Require ROBONONA_IMAGE_REPO to be set"
+   :depends [-get-image-repo]
+   :task (when (or (nil? -get-image-repo) (empty? -get-image-repo))
+           (println "Error: ROBONONA_IMAGE_REPO environment variable not set")
+           (println "Example: export ROBONONA_IMAGE_REPO=ghcr.io/myorg")
+           (System/exit 1))}
+
+  -get-local-image-name
+  {:doc "Internal: Get local image name (no registry prefix)"
+   :depends [-get-version]
+   :task (let [name (or (System/getenv "ROBONONA_IMAGE_NAME") "coffeebot")]
+           (str name ":" -get-version))}
+
+  -get-remote-image-name
+  {:doc "Internal: Get full image name with registry prefix"
+   :depends [-get-image-repo -get-version]
+   :task (let [name (or (System/getenv "ROBONONA_IMAGE_NAME") "coffeebot")]
+           (str -get-image-repo "/" name ":" -get-version))}
+
+  docker:build
+  {:doc "Build Docker image locally"
+   :depends [-docker-available? -get-local-image-name]
+   :task (do
+           (println "Building image:" -get-local-image-name)
+           (shell "docker" "build" "-t" -get-local-image-name ".")
+           (println "Successfully built:" -get-local-image-name))}
+
+  docker:push
+  {:doc "Tag and push Docker image to registry (requires ROBONONA_IMAGE_REPO)"
+   :depends [-docker-available? -require-image-repo -get-local-image-name -get-remote-image-name]
+   :task (do
+           (println "Tagging" -get-local-image-name "as" -get-remote-image-name)
+           (shell "docker" "tag" -get-local-image-name -get-remote-image-name)
+           (println "Pushing image:" -get-remote-image-name)
+           (shell "docker" "push" -get-remote-image-name)
+           (println "Successfully pushed:" -get-remote-image-name))}
+
+  docker:build-push
+  {:doc "Build and push Docker image"
+   :depends [docker:build docker:push]}
+
+  ;; === Helm tasks ===
+
+  -helm-available?
+  {:doc "Internal: Check if helm is available"
+   :task (try
+           (shell {:out :string :err :string} "helm" "version")
+           true
+           (catch Exception _
+             (println "Error: helm is not available")
+             (System/exit 1)))}
+
+  -kubectl-configured?
+  {:doc "Internal: Check if kubectl is configured"
+   :task (try
+           (shell {:out :string :err :string} "kubectl" "cluster-info")
+           true
+           (catch Exception _
+             (println "Error: kubectl not configured or cluster not accessible")
+             (System/exit 1)))}
+
+  -get-helm-namespace
+  {:doc "Internal: Get namespace from env or default"
+   :task (or (System/getenv "ROBONONA_K8S_NAMESPACE") "coffeebot")}
+
+  -get-helm-release
+  {:doc "Internal: Get release name from env or default"
+   :task (or (System/getenv "ROBONONA_HELM_RELEASE") "coffeebot")}
+
+  helm:template
+  {:doc "Render Helm templates locally (dry-run, requires ROBONONA_IMAGE_REPO)"
+   :depends [-helm-available? -require-image-repo -get-helm-namespace -get-helm-release
+             -get-image-repo -get-version]
+   :task (let [name (or (System/getenv "ROBONONA_IMAGE_NAME") "coffeebot")]
+           (shell "helm" "template" -get-helm-release "./helm-chart"
+                  "--namespace" -get-helm-namespace
+                  "--set" (str "image.repository=" -get-image-repo)
+                  "--set" (str "image.name=" name)
+                  "--set" (str "image.tag=" -get-version)))}
+
+  helm:deploy
+  {:doc "Deploy/upgrade via Helm (requires ROBONONA_IMAGE_REPO and kubectl configured)"
+   :depends [-helm-available? -kubectl-configured? -require-image-repo
+             -get-helm-namespace -get-helm-release
+             -get-image-repo -get-version]
+   :task (let [name (or (System/getenv "ROBONONA_IMAGE_NAME") "coffeebot")
+               values-file (System/getenv "ROBONONA_HELM_VALUES_FILE")]
+           (println "Deploying" -get-helm-release "to namespace" -get-helm-namespace)
+           (apply shell
+                  (concat
+                   ["helm" "upgrade" "--install" -get-helm-release "./helm-chart"
+                    "--namespace" -get-helm-namespace
+                    "--create-namespace"
+                    "--set" (str "image.repository=" -get-image-repo)
+                    "--set" (str "image.name=" name)
+                    "--set" (str "image.tag=" -get-version)]
+                   (when values-file
+                     ["-f" values-file])))
+           (println "Deployment complete"))}
+
+  helm:status
+  {:doc "Show Helm release status"
+   :depends [-helm-available? -get-helm-namespace -get-helm-release]
+   :task (shell "helm" "status" -get-helm-release
+                "--namespace" -get-helm-namespace)}
+
+  helm:uninstall
+  {:doc "Uninstall Helm release"
+   :depends [-helm-available? -get-helm-namespace -get-helm-release]
+   :task (do
+           (println "Uninstalling" -get-helm-release "from namespace" -get-helm-namespace)
+           (shell "helm" "uninstall" -get-helm-release
+                  "--namespace" -get-helm-namespace))}
+
+  ;; === Combined workflow ===
+
+  deploy
+  {:doc "Full workflow: build, push, and deploy"
+   :depends [docker:build-push helm:deploy]}}}

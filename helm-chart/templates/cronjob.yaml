@@ -21,10 +21,14 @@ spec:
             {{- include "coffeebot.labels" . | nindent 12 }}
         spec:
           restartPolicy: OnFailure
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
           containers:
             - name: coffeebot
-              image: my-image-repo.io/coffeebot:3.0.0
-              imagePullPolicy: IfNotPresent
+              image: "{{ .Values.image.repository }}/{{ .Values.image.name }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
               env:
                 - name: ROBONONA_CHAT_BACKEND
                   value: {{ .Values.chatBackend | quote }}

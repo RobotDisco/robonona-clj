@@ -1,4 +1,15 @@
 ---
+# Image configuration
+image:
+  repository: ""  # e.g., ghcr.io/username, docker.io/org
+  name: "coffeebot"
+  tag: ""  # Defaults to Chart.appVersion if not set
+  pullPolicy: IfNotPresent
+
+# Image pull secrets for private registries
+imagePullSecrets: []
+# - name: my-registry-secret
+
 # Chat backend: "slack" or "mattermost"
 chatBackend: "slack"
 

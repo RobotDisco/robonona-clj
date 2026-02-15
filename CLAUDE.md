@@ -13,11 +13,41 @@ bb test              # Run unit tests (excludes integration tests)
 bb test:full         # Run all tests including integration tests
 bb lint              # Run clj-kondo linter
 bb format            # Autoformat code with cljfmt
+bb robonona-version  # Show current version from VERSION file
 ```
 
 Run the coffeebot directly:
 ```bash
 bb src/robot_disco/robonona/coffeebot.clj
+```
+
+### Docker/Kubernetes Commands
+
+```bash
+# Build locally (no env vars needed)
+bb docker:build
+
+# Push to registry (requires ROBONONA_IMAGE_REPO)
+ROBONONA_IMAGE_REPO=ghcr.io/myorg bb docker:push
+
+# Build and push
+ROBONONA_IMAGE_REPO=ghcr.io/myorg bb docker:build-push
+
+# Render Helm templates locally (dry-run)
+ROBONONA_IMAGE_REPO=ghcr.io/myorg bb helm:template
+
+# Deploy to Kubernetes
+ROBONONA_IMAGE_REPO=ghcr.io/myorg bb helm:deploy
+
+# Deploy with additional values file (for secrets)
+ROBONONA_IMAGE_REPO=ghcr.io/myorg ROBONONA_HELM_VALUES_FILE=secrets.yaml bb helm:deploy
+
+# Full workflow: build, push, deploy
+ROBONONA_IMAGE_REPO=ghcr.io/myorg bb deploy
+
+# Check release status / uninstall
+bb helm:status
+bb helm:uninstall
 ```
 
 ## Architecture
@@ -59,23 +89,27 @@ All environment variables use the `ROBONONA_` prefix:
 - `ROBONONA_MATCH_ALGORITHM` - `random` (default) or `round-robin`
 - `ROBONONA_MATCH_HISTORY_FILE` - Path to history file (required for round-robin)
 
+### Deployment Environment Variables
+
+Used by `bb docker:push`, `bb helm:deploy`, etc.:
+
+- `ROBONONA_IMAGE_REPO` - Docker registry path (e.g., `ghcr.io/myorg`, `docker.io/user`)
+- `ROBONONA_IMAGE_NAME` - Image name (default: `coffeebot`)
+- `ROBONONA_K8S_NAMESPACE` - Kubernetes namespace (default: `coffeebot`)
+- `ROBONONA_HELM_RELEASE` - Helm release name (default: `coffeebot`)
+- `ROBONONA_HELM_VALUES_FILE` - Path to additional Helm values file (for secrets)
+
 ## Kubernetes Deployment
 
-The Helm chart is in `helm-chart/`. Deploy with:
+The Helm chart is in `helm-chart/`. Deploy using bb tasks:
 
 ```bash
-# Install (Slack)
-helm install coffeebot ./helm-chart \
-  --namespace coffeebot --create-namespace \
-  --set slack.token="xoxb-your-token" \
-  --set slack.channel="C12345678"
-
-# Upgrade
-helm upgrade coffeebot ./helm-chart \
-  --namespace coffeebot \
-  --set slack.token="xoxb-your-token" \
-  --set slack.channel="C12345678"
+# Create a values.yaml with secrets (slack.token, slack.channel, etc.)
+# Then deploy:
+ROBONONA_IMAGE_REPO=ghcr.io/myorg ROBONONA_HELM_VALUES_FILE=values.yaml bb deploy
 ```
+
+See `helm-chart/values.yaml` for all available configuration options.
 
 ## Conventions
 
@@ -96,10 +130,12 @@ helm upgrade coffeebot ./helm-chart \
 
 ## Versioning
 
-This project follows [semantic versioning](https://semver.org/). At the end of each session, ensure versions are incremented appropriately:
+This project follows [semantic versioning](https://semver.org/). The canonical version is in the `VERSION` file at the repo root.
 
-- **App version** (`helm-chart/Chart.yaml` `appVersion` and image tag in `templates/cronjob.yaml`): Increment for application code changes
-- **Chart version** (`helm-chart/Chart.yaml` `version`): Increment for Helm chart changes only
+At the end of each session, ensure versions are incremented appropriately:
+
+- **App version** (`VERSION` file): Increment for application code changes. Keep `helm-chart/Chart.yaml` `appVersion` in sync.
+- **Chart version** (`helm-chart/Chart.yaml` `version`): Increment for Helm chart changes only.
 
 Version increments:
 - **MAJOR**: Breaking changes
