@@ -126,7 +126,30 @@ bb ./coffee.clj
 
 ** Versioning
 
-This project follows [[https://semver.org/][Semantic Versioning]].
+This project follows [[https://semver.org/][Semantic Versioning]]. The canonical version is stored in the =VERSION= file at the repository root.
+
+*** Check Current Version
+#+BEGIN_SRC bash
+bb robonona-version
+#+END_SRC
+
+*** Bump App Version
+#+BEGIN_SRC bash
+bb version:bump patch   # Bug fixes (1.0.0 -> 1.0.1)
+bb version:bump minor   # New features (1.0.0 -> 1.1.0)
+bb version:bump major   # Breaking changes (1.0.0 -> 2.0.0)
+#+END_SRC
+
+This updates =VERSION= and syncs =helm-chart/Chart.yaml= =appVersion=.
+
+*** Bump Chart Version
+#+BEGIN_SRC bash
+bb chart-version:bump patch   # Chart fixes (1.0.0 -> 1.0.1)
+bb chart-version:bump minor   # Chart features (1.0.0 -> 1.1.0)
+bb chart-version:bump major   # Chart breaking changes (1.0.0 -> 2.0.0)
+#+END_SRC
+
+This updates the =version= field in =helm-chart/Chart.yaml= (for Helm chart changes only, not app changes).
 
 ** Contributing
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.

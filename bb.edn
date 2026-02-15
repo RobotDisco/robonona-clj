@@ -30,6 +30,80 @@
    :depends [-get-version]
    :task (println "Version:" -get-version)}
 
+  -parse-version
+  {:doc "Internal: Parse version string into [major minor patch]"
+   :depends [-get-version]
+   :task (mapv parse-long (clojure.string/split -get-version (re-pattern "\\.")))}
+
+  -bump-version
+  {:doc "Internal: Bump version by type (major, minor, patch)"
+   :depends [-parse-version]
+   :task (let [bump-type (or (first *command-line-args*) "patch")
+               [major minor patch] -parse-version
+               [new-major new-minor new-patch]
+               (case bump-type
+                 "major" [(inc major) 0 0]
+                 "minor" [major (inc minor) 0]
+                 "patch" [major minor (inc patch)]
+                 (do (println "Error: Invalid bump type. Use: major, minor, or patch")
+                     (System/exit 1)))]
+           (str new-major "." new-minor "." new-patch))}
+
+  -update-chart-appversion
+  {:doc "Internal: Update appVersion in Chart.yaml"
+   :depends [-bump-version]
+   :task (let [chart-file "helm-chart/Chart.yaml"
+               content (slurp chart-file)
+               updated (clojure.string/replace content
+                                               (re-pattern "appVersion: \"[^\"]+\"")
+                                               (str "appVersion: \"" -bump-version "\""))]
+           (spit chart-file updated))}
+
+  version:bump
+  {:doc "Bump version (usage: bb version:bump [major|minor|patch])"
+   :depends [-get-version -bump-version -update-chart-appversion]
+   :task (do
+           (spit "VERSION" (str -bump-version "\n"))
+           (println "Version bumped:" -get-version "->" -bump-version)
+           (println "Updated: VERSION, helm-chart/Chart.yaml"))}
+
+  -get-chart-version
+  {:doc "Internal: Read chart version from Chart.yaml"
+   :task (let [content (slurp "helm-chart/Chart.yaml")
+               match (re-find (re-pattern "version: ([0-9]+\\.[0-9]+\\.[0-9]+)") content)]
+           (second match))}
+
+  -parse-chart-version
+  {:doc "Internal: Parse chart version string into [major minor patch]"
+   :depends [-get-chart-version]
+   :task (mapv parse-long (clojure.string/split -get-chart-version (re-pattern "\\.")))}
+
+  -bump-chart-version
+  {:doc "Internal: Bump chart version by type (major, minor, patch)"
+   :depends [-parse-chart-version]
+   :task (let [bump-type (or (first *command-line-args*) "patch")
+               [major minor patch] -parse-chart-version
+               [new-major new-minor new-patch]
+               (case bump-type
+                 "major" [(inc major) 0 0]
+                 "minor" [major (inc minor) 0]
+                 "patch" [major minor (inc patch)]
+                 (do (println "Error: Invalid bump type. Use: major, minor, or patch")
+                     (System/exit 1)))]
+           (str new-major "." new-minor "." new-patch))}
+
+  chart-version:bump
+  {:doc "Bump Helm chart version (usage: bb chart-version:bump [major|minor|patch])"
+   :depends [-get-chart-version -bump-chart-version]
+   :task (let [chart-file "helm-chart/Chart.yaml"
+               content (slurp chart-file)
+               updated (clojure.string/replace content
+                                               (re-pattern (str "version: " -get-chart-version))
+                                               (str "version: " -bump-chart-version))]
+           (spit chart-file updated)
+           (println "Chart version bumped:" -get-chart-version "->" -bump-chart-version)
+           (println "Updated: helm-chart/Chart.yaml"))}
+
   ;; === Docker tasks ===
 
   -docker-available?
